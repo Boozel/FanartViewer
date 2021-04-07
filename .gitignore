@@ -1,0 +1,6 @@
+.qmake.stash
+debug/
+release/
+FanartViewer.pro.user
+FanartViewer.v*
+.vs/
