@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
+#include <QThread>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,7 +17,12 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    void Update(void);
+
 private:
-    Ui::MainWindow *ui;
+    QTimer                  *mUpdateTimer;
+    Ui::MainWindow          *ui;
+
 };
 #endif // MAINWINDOW_H

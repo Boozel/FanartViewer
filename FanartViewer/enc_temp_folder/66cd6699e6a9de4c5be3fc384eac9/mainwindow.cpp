@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUpdateTimer = new QTimer(this);
     connect(mUpdateTimer, SIGNAL(timeout()), this, SLOT(Update()));
 
-    mUpdateTimer->setInterval(10000); // Tick every ten seconds
+    mUpdateTimer->setInterval(1000); // Tick every second
     mUpdateTimer->start();
 }
 
