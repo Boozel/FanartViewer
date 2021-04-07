@@ -11,6 +11,7 @@
    + Inside of an artist's folder, place all of their art
 
 # TODO:
+- Render the window before trying to load a picture so it doesn't run forever in the background if you mess up.
 - Validation to prevent hanging
 - Custom draw for a label object so we can get text with an outline
 - Configurable settings (set TLD for images, set image rotation speed)
