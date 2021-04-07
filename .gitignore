@@ -4,3 +4,4 @@ release/
 FanartViewer.pro.user
 FanartViewer.v*
 .vs/
+ui_mainwindow.h
