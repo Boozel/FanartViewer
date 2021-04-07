@@ -10,17 +10,6 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-class ArtistLabel : public QWidget
-{
-    Q_OBJECT
-protected:
-    void paintEvent(QPaintEvent* event) override;
-public:
-    void UpdateArtistName(QString);
-private:
-    QString     _artistName;
-};
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -35,7 +24,6 @@ public slots:
 private:
     QTimer                                  *mUpdateTimer;
     Ui::MainWindow                          *ui;
-    ArtistLabel                             *mArtistLabel;
     QList<QPair<QString, QList<QString>>>   mArtDirectory;
     
 

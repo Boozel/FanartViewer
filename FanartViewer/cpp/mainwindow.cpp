@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUpdateTimer = new QTimer(this);
     connect(mUpdateTimer, SIGNAL(timeout()), this, SLOT(Update()));
 
-    mUpdateTimer->setInterval(2000); // Tick every ten seconds
+    mUpdateTimer->setInterval(10000); // Tick every ten seconds
     mUpdateTimer->start();
 
     // Retrieve all art files
@@ -54,14 +54,17 @@ MainWindow::MainWindow(QWidget *parent)
     {
         //   Create a pair object that will hold the artist's name ('first') and a list of all found pieces ('second', list of absolute paths to art)
         QPair<QString, QList<QString>> mArtistPieces;
+        mArtistPieces.first = artist;
         //   Chdir into the artist's folder
         dir.cd(dir.absolutePath() + "/" + mArtistPieces.first);
         QStringList pieces = dir.entryList(QDir::NoFilter, QDir::DirsFirst);
+        qDebug() << QString("Artist: %1").arg(artist);
 
         //   Iterate over all found art
         foreach(const QString &picture, pieces)
         {
             //   Store each piece
+            qDebug() << QString("Picture: %1").arg(picture);
             mArtistPieces.second.append(dir.absolutePath() + "/" + picture);
         }
 
@@ -94,7 +97,7 @@ void MainWindow::Update()
     // TODO: This will run forever if you, for some reason, have a folder of trash
     while (currentPic.isNull())
     {
-        qDebug() << "This image is broken. Next...";
+        qDebug() << "This image is broken: " + mArtDirectory[artist].second[picture] + " Next...";
         quint32 picture = QRandomGenerator::global()->bounded(0, mArtDirectory[artist].second.size());
         currentPic = mArtDirectory[artist].second[picture];
     }
