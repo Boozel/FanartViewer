@@ -15,4 +15,4 @@
 - Validation to prevent hanging
 - Custom draw for a label object so we can get text with an outline
 - Configurable settings (set TLD for images, set image rotation speed)
-- - Image cooldown so we don't load the same image multiple times / rapidly
+- Image cooldown so we don't load the same image multiple times / rapidly
