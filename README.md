@@ -1,6 +1,6 @@
 # FanartViewer
 
-# Use FUCKIN READ THIS
+# Use READ THIS
 
 - This has like, no validation. If you mess it up, it WILL RUN UNTIL YOU KILL IT via TaskManager
 
