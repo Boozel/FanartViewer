@@ -13,14 +13,35 @@
 
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QSettings>
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , _ui(new Ui::MainWindow)
 {
     _ui->setupUi(this);
+
+    QSettings settings("Boozel", "Fanart Viewer");
+    if(settings.value("needs_init").toInt() == 0)   //Uninitialized
+    {
+        while(_tld == NULL)
+        {
+            _tld = RunSetup();
+            
+            if(_tld == NULL)
+            {
+                QMessageBox::warning(this, tr("Fanart Viewer"),
+                                               tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
+                                               QMessageBox::Ok);
+            }
+        }
+    }
+
     this->setStyleSheet("background-color: rgb(0,254,0)");
     this->resize(1920, 1000);
+    
     // Stolen from the internet to make the background transparent (http://www.ti-r.com/?Articles/Qt/QtWindowBackgroundTransparency)
     // ****************************************************
     //Opacity to 1 to make the window fully opaque
@@ -51,10 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     //   'dir' starts in CWD of .exe
     QDir dir;
     //   CD to adjacent dir 'pictures'
-    dir.cd(dir.absolutePath() + "/pictures");
-    //   store TLD
-    QString tlwd = dir.absolutePath();
-    //   Get only files and directories
+    dir.cd(_tld);
     dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoSymLinks | QDir::NoDot | QDir::NoDotDot);
     //ui->picDisplayLabel->setScaledContents(true);
 
@@ -88,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
 
         //   return to /pictures dir
-        dir.cd(tlwd);
+        dir.cd(_tld);
 
         //   Append the sum of this artist's efforts into the pile
         _artDirectory.append(mArtistPieces);
@@ -109,6 +127,16 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete _ui;
+}
+
+QString MainWindow::RunSetup()
+{
+    QString dir = QFileDialog::getExistingDirectory(this,
+            tr("Open Fanart Master Folder"),
+            "/",
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    
+    return dir;
 }
 
 void MainWindow::setupMasterQueue()
@@ -140,7 +168,7 @@ void MainWindow::setupMasterQueue()
         _masterQueue.append(flatList[image]);
 
         // 'pop' out the selected image
-        flatList.removeAt(image);               
+        flatList.removeAt(image);
     }
 
 }
@@ -155,7 +183,7 @@ void MainWindow::FindEndOfMovie(int frame)
         if (_bIsGif && _currentMovie != nullptr)
         {
             // GIFs start at frame 1 and end at 0 for some reason? Weird.
-            if (_currentMovie->currentFrameNumber() <= 1 && _bFirstPlay == true)      
+            if (_currentMovie->currentFrameNumber() <= 1 && _bFirstPlay == true)
             {
                 _bFirstPlay = false;
 
@@ -189,10 +217,10 @@ void MainWindow::DetermineLengthToDisplay(QMovie* inMovie)
     int totalFrames = inMovie->frameCount();
 
     // Only calculate if it's not a still image (can be 1 or 0)
-    if (totalFrames >= 2)                       
+    if (totalFrames >= 2)
     {
         _bReleaseGif = false;
-        _bIsGif = true; 
+        _bIsGif = true;
     }
 
     // If this is just a still image, set a 5 second timer and move on

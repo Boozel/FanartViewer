@@ -31,11 +31,14 @@ public slots:
     void FindEndOfMovie(int);
 
 private:
+    QString RunSetup();
+    
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
     QMovie                                  *_currentMovie;
     QPixmap                                 _previousFirstFrame;
     QString                                 _prevMovieFilepath;
+    QString                                 _tld;
     bool                                    _bJustLaunched;
     bool                                    _bFirstPlay;
     bool                                    _bReleaseGif;
