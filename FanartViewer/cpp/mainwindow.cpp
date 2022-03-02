@@ -11,7 +11,6 @@
 
 #include <qdebug.h>
 
-#include <QSettings>
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -21,11 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     _ui->setupUi(this);
 
-    QSettings settings("Boozel", "Fanart Viewer");
-    if(settings.value("needs_init").toInt() == 0)   //Uninitialized
-    {
-        RunSetup(this);
-    }
+    _settings = new QSettings("Boozel", "Fanart Viewer");
+    RunSetup();
+    
     
     // Stolen from the internet to make the background transparent (http://www.ti-r.com/?Articles/Qt/QtWindowBackgroundTransparency)
     // ****************************************************
@@ -114,24 +111,40 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-bool MainWindow::RunSetup(QWidget* widget)
+bool MainWindow::RunSetup()
 {
-    while(_tld == NULL)
+    if(_settings->value("needs_init").toInt() == 0)   //Uninitialized
     {
-        _tld = SetPictureTLD();
-        
-        if(_tld == NULL)
+        while(_tld == NULL)
         {
-            QMessageBox::warning(this, tr("Fanart Viewer"),
-                                           tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
-                                           QMessageBox::Ok);
+            _tld = SetPictureTLD();
+            
+            if(_tld == NULL)
+            {
+                int ret = QMessageBox::warning(this, tr("Fanart Viewer"),
+                                               tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
+                                               QMessageBox::Cancel | QMessageBox::Ok);
+                
+                if(ret == QMessageBox::Cancel)
+                {
+                    QMessageBox::warning(this, tr("Fanart Viewer"),
+                                                   tr("Fanart Viewer will now close."),
+                                                   QMessageBox::Ok);
+                    exit(0);
+                }
+            }
+            else
+            {
+                _settings->setValue("needs_init", 1);
+                _settings->setValue("pictures_dir", _tld);
+            }
         }
     }
-    
-
-    widget->setStyleSheet("background-color: " + _matteBkg.name());
-    widget->resize(_appW, _appH);
-    
+    _matteBkg = SetMatteBkgColor();
+    SetAppDimesions();
+    _tld = _settings->value("pictures_dir").value<QString>();
+    this->setStyleSheet("background-color: " + _matteBkg.name());
+    this->resize(_appW, _appH);
     return true;
 }
 

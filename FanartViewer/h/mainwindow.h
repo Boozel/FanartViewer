@@ -7,6 +7,7 @@
 #include <QList>
 
 #include <QElapsedTimer>
+#include <QSettings>
 #include <QPropertyAnimation>
 #include <QColor>
 
@@ -31,7 +32,7 @@ public slots:
     void FindEndOfMovie(int);
 
 private:
-    bool        RunSetup(QWidget* widget);
+    bool        RunSetup();
     QString     SetPictureTLD();
     bool        SetAppDimesions();
     QColor      SetMatteBkgColor();
@@ -53,6 +54,7 @@ private:
     QMutex                                  _gifMutex;
     
     // App settings
+    QSettings                               *_settings;
     QString                                 _tld;
     int                                     _appW;
     int                                     _appH;
