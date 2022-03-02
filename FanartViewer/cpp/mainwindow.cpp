@@ -12,6 +12,7 @@
 #include <qdebug.h>
 
 #include <QFileDialog>
+#include <QColorDialog>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -32,21 +33,36 @@ MainWindow::~MainWindow()
 void MainWindow::SetMenuBar()
 {
     _settingsMenu = menuBar()->addMenu(tr("&Settings"));
-    // Open action
-    _runSetup = new QAction(tr("&Run Setup"), this);
-    _runSetup->setShortcuts(QKeySequence::Open);
-    _runSetup->setStatusTip(tr("Run the initial setup process again."));
-    connect(_runSetup, SIGNAL(triggered()), this, SLOT(RunForcedSetup()));
-    _settingsMenu->addAction(_runSetup);
+    
+    // Setup action
+    _runSetupDlg = new QAction(tr("&Run Setup"), this);
+    _runSetupDlg->setShortcuts(QKeySequence::Open);
+    _runSetupDlg->setStatusTip(tr("Run the initial setup process again."));
+    connect(_runSetupDlg, SIGNAL(triggered()), this, SLOT(RunForcedSetupDlg()));
+    _settingsMenu->addAction(_runSetupDlg);
+    
+    // Setup action
+    _setMatteColorDlg = new QAction(tr("&Change Matte"), this);
+    _setMatteColorDlg->setShortcuts(QKeySequence::Open);
+    _setMatteColorDlg->setStatusTip(tr("Change transparency color."));
+    connect(_setMatteColorDlg, SIGNAL(triggered()), this, SLOT(SetMatteBkgColorDlg()));
+    _settingsMenu->addAction(_setMatteColorDlg);
 }
 
 
-bool MainWindow::RunForcedSetup()
+bool MainWindow::RunForcedSetupDlg()
 {
     _settings->setValue("needs_init", 0);
     RunSetup(false);
     
     return 0;
+}
+
+bool MainWindow::SetMatteBkgColorDlg()
+{
+    SetMatteBkgColor(QColorDialog::getColor());
+
+    return true;
 }
 
 bool MainWindow::RunSetup(bool fullinit)
@@ -83,10 +99,13 @@ bool MainWindow::RunSetup(bool fullinit)
     {
         SetMenuBar();
     }
-    _matteBkg = SetMatteBkgColor();
+    (_settings->value("matte_bkg") != 0 ?
+        SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>()):
+        SetMatteBkgColor(QColor(0,254,0)));
+    
+    SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>());
     SetAppDimesions();
     _tld = _settings->value("pictures_dir").value<QString>();
-    this->setStyleSheet("background-color: " + _matteBkg.name());
     this->resize(_appW, _appH);
     InitViewer();
     return true;
@@ -112,9 +131,11 @@ bool MainWindow::SetAppDimesions()
     return true;
 }
 
-QColor MainWindow::SetMatteBkgColor()
+void MainWindow::SetMatteBkgColor(QColor color)
 {
-    return QColor(0, 254, 0);
+    _matteBkg = color;
+    _settings->setValue("matte_bkg", color);
+    this->setStyleSheet("background-color: " + _matteBkg.name());
 }
 
 bool MainWindow::InitViewer()

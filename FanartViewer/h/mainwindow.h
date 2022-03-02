@@ -29,7 +29,8 @@ public:
     void DetermineLengthToDisplay(QMovie*);
 
 public slots:
-    bool RunForcedSetup();
+    bool RunForcedSetupDlg();
+    bool SetMatteBkgColorDlg();
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -39,7 +40,7 @@ private:
     bool        RunSetup(bool fullinit);
     QString     SetPictureTLD();
     bool        SetAppDimesions();
-    QColor      SetMatteBkgColor();
+    void        SetMatteBkgColor(QColor);
     
     bool        InitViewer();
     
@@ -68,6 +69,7 @@ private:
     
     // Menu Navs
     QMenu                                   *_settingsMenu;
-    QAction                                 *_runSetup;
+    QAction                                 *_runSetupDlg;
+    QAction                                 *_setMatteColorDlg;
 };
 #endif // MAINWINDOW_H
