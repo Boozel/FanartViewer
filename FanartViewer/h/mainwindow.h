@@ -10,6 +10,8 @@
 #include <QSettings>
 #include <QPropertyAnimation>
 #include <QColor>
+#include <QMenuBar>
+#include <QAction>
 
 #include <QMutex>
 QT_BEGIN_NAMESPACE
@@ -27,12 +29,14 @@ public:
     void DetermineLengthToDisplay(QMovie*);
 
 public slots:
+    bool RunForcedSetup();
+    void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
     void FindEndOfMovie(int);
 
 private:
-    bool        RunSetup();
+    bool        RunSetup(bool fullinit);
     QString     SetPictureTLD();
     bool        SetAppDimesions();
     QColor      SetMatteBkgColor();
@@ -59,5 +63,9 @@ private:
     int                                     _appW;
     int                                     _appH;
     QColor                                  _matteBkg;
+    
+    // Menu Navs
+    QMenu                                   *_settingsMenu;
+    QAction                                 *_runSetup;
 };
 #endif // MAINWINDOW_H

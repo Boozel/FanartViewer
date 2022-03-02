@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     _ui->setupUi(this);
 
     _settings = new QSettings("Boozel", "Fanart Viewer");
-    RunSetup();
+    RunSetup(true);
     
     
     // Stolen from the internet to make the background transparent (http://www.ti-r.com/?Articles/Qt/QtWindowBackgroundTransparency)
@@ -111,11 +111,32 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-bool MainWindow::RunSetup()
+void MainWindow::SetMenuBar()
+{
+    _settingsMenu = menuBar()->addMenu(tr("&Settings"));
+    // Open action
+    _runSetup = new QAction(tr("&Run Setup"), this);
+    _runSetup->setShortcuts(QKeySequence::Open);
+    _runSetup->setStatusTip(tr("Run the initial setup process again."));
+    connect(_runSetup, SIGNAL(triggered()), this, SLOT(RunForcedSetup()));
+    _settingsMenu->addAction(_runSetup);
+}
+
+
+bool MainWindow::RunForcedSetup()
+{
+    _settings->setValue("needs_init", 0);
+    RunSetup(false);
+    
+    return 0;
+}
+
+bool MainWindow::RunSetup(bool fullinit)
 {
     if(_settings->value("needs_init").toInt() == 0)   //Uninitialized
     {
-        while(_tld == NULL)
+        _tld = "";
+        while(_tld == "")
         {
             _tld = SetPictureTLD();
             
@@ -139,6 +160,10 @@ bool MainWindow::RunSetup()
                 _settings->setValue("pictures_dir", _tld);
             }
         }
+    }
+    if(fullinit == true)
+    {
+        SetMenuBar();
     }
     _matteBkg = SetMatteBkgColor();
     SetAppDimesions();
