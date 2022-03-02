@@ -22,88 +22,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     _settings = new QSettings("Boozel", "Fanart Viewer");
     RunSetup(true);
-    
-    
-    // Stolen from the internet to make the background transparent (http://www.ti-r.com/?Articles/Qt/QtWindowBackgroundTransparency)
-    // ****************************************************
-    //Opacity to 1 to make the window fully opaque
-    //setWindowOpacity(1);
-
-    // Remove the frame of the window
-    //setWindowFlags(windowFlags() | Qt::FramelessWindowHint );
-
-    // Instruct Qt to use a translucent background
-    //setAttribute(Qt::WA_TranslucentBackground, true);
-    // End of dirty theft from a lovely person thanks dawg
-    // ****************************************************
-
-    // Initialize some stuff
-    _bJustLaunched = true;
-    _bFirstPlay = true;
-    _bReleaseGif = false;
-    _currentMovie = new QMovie();
-
-    _slideOut = new QPropertyAnimation(_ui->picDisplayLabelPrevious, "geometry");
-    _slideOut->setDuration(2000);
-    _slideOut->setEasingCurve(QEasingCurve::InQuad);
-    _slideOut->setStartValue(QRect(_ui->picDisplayLabelPrevious->geometry().x(), _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
-    _slideOut->setEndValue(QRect(-1920, _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
-    connect(_slideOut, SIGNAL(finished()), this, SLOT(ResetOldImageLabel()));
-
-    // Retrieve all art files
-    //   'dir' starts in CWD of .exe
-    QDir dir;
-    //   CD to adjacent dir 'pictures'
-    dir.cd(_tld);
-    dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoSymLinks | QDir::NoDot | QDir::NoDotDot);
-    //ui->picDisplayLabel->setScaledContents(true);
-
-    //   Create a list of all of the top-level directory names. Theoretically, all the artists.
-    QStringList artists = dir.entryList (QDir::NoFilter, QDir::DirsFirst);
-    if (artists.size() == 0)
-    {
-        // Nothing to show - close program.
-        close();
-    }
-
-    qDebug() << "Files in " << dir.absolutePath() << ":";
-
-    //   For each artist directory, scan it for all files (hopefully, all images...)
-    foreach(const QString &artist, artists)
-    {
-        //   Create a pair object that will hold the artist's name ('first') and a list of all found pieces ('second', list of absolute paths to art)
-        QPair<QString, QList<QString>> mArtistPieces;
-        mArtistPieces.first = artist;
-        //   Chdir into the artist's folder
-        dir.cd(dir.absolutePath() + "/" + mArtistPieces.first);
-        QStringList pieces = dir.entryList(QDir::NoFilter, QDir::DirsFirst);
-        qDebug() << QString("Artist: %1").arg(artist);
-
-        //   Iterate over all found art
-        foreach(const QString &picture, pieces)
-        {
-            //   Store each piece
-            qDebug() << QString("Picture: %1").arg(picture);
-            mArtistPieces.second.append(dir.absolutePath() + "/" + picture);
-        }
-
-        //   return to /pictures dir
-        dir.cd(_tld);
-
-        //   Append the sum of this artist's efforts into the pile
-        _artDirectory.append(mArtistPieces);
-    }
-
-    // Hide the "previous" image label - there is currently no previous image.
-    _ui->picDisplayLabelPrevious->setVisible(false);
-    _ui->picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
-
-    // Randomize and queue all images
-    setupMasterQueue();
-    _queuepos = 0;
-
-    //   run our Update method - throw up some art
-    Update();
 }
 
 MainWindow::~MainWindow()
@@ -170,6 +88,7 @@ bool MainWindow::RunSetup(bool fullinit)
     _tld = _settings->value("pictures_dir").value<QString>();
     this->setStyleSheet("background-color: " + _matteBkg.name());
     this->resize(_appW, _appH);
+    InitViewer();
     return true;
 }
 
@@ -198,12 +117,102 @@ QColor MainWindow::SetMatteBkgColor()
     return QColor(0, 254, 0);
 }
 
+bool MainWindow::InitViewer()
+{    
+    // Initialize some stuff
+    _bJustLaunched = true;
+    _bFirstPlay = true;
+    _bReleaseGif = false;
+    _currentMovie = new QMovie();
+
+    _slideOut = new QPropertyAnimation(_ui->picDisplayLabelPrevious, "geometry");
+    _slideOut->setDuration(2000);
+    _slideOut->setEasingCurve(QEasingCurve::InQuad);
+    _slideOut->setStartValue(QRect(_ui->picDisplayLabelPrevious->geometry().x(), _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
+    _slideOut->setEndValue(QRect(-1920, _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
+    connect(_slideOut, SIGNAL(finished()), this, SLOT(ResetOldImageLabel()));
+
+    // Retrieve all art files
+    //   'dir' starts in CWD of .exe
+    QDir dir;
+    //   CD to adjacent dir 'pictures'
+    dir.cd(_tld);
+    dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoSymLinks | QDir::NoDot | QDir::NoDotDot);
+    //ui->picDisplayLabel->setScaledContents(true);
+
+    //   Create a list of all of the top-level directory names. Theoretically, all the artists.
+    QStringList artists = dir.entryList (QDir::NoFilter, QDir::DirsFirst);
+    if (artists.size() == 0)
+    {
+        // Nothing to show - close program.
+        close();
+    }
+
+    qDebug() << "Files in " << dir.absolutePath() << ":";
+
+    //   For each artist directory, scan it for all files (hopefully, all images...)
+    
+    //If there is already an art list set up... Clear it.
+    if(_artDirectory.size() != 0)
+    {
+        //'foreach' fuckin HATES templates lol
+        for (int i = 0; i < _artDirectory.size(); i++)
+        {
+            _artDirectory[i].second.clear();
+        }
+        _artDirectory.clear();
+    }
+    
+    foreach(const QString &artist, artists)
+    {
+        //   Create a pair object that will hold the artist's name ('first') and a list of all found pieces ('second', list of absolute paths to art)
+        QPair<QString, QList<QString>> mArtistPieces;
+        mArtistPieces.first = artist;
+        //   Chdir into the artist's folder
+        dir.cd(dir.absolutePath() + "/" + mArtistPieces.first);
+        QStringList pieces = dir.entryList(QDir::NoFilter, QDir::DirsFirst);
+        qDebug() << QString("Artist: %1").arg(artist);
+
+        //   Iterate over all found art
+        foreach(const QString &picture, pieces)
+        {
+            //   Store each piece
+            qDebug() << QString("Picture: %1").arg(picture);
+            mArtistPieces.second.append(dir.absolutePath() + "/" + picture);
+        }
+
+        //   return to /pictures dir
+        dir.cd(_tld);
+
+        //   Append the sum of this artist's efforts into the pile
+        _artDirectory.append(mArtistPieces);
+    }
+
+    // Hide the "previous" image label - there is currently no previous image.
+    _ui->picDisplayLabelPrevious->setVisible(false);
+    _ui->picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
+
+    // Randomize and queue all images
+    setupMasterQueue();
+    _queuepos = 0;
+
+    //   run our Update method - throw up some art
+    Update();
+}
+
 void MainWindow::setupMasterQueue()
 {
     // If there's nothing to queue, close
     if (_artDirectory.size() <= 0)
     {
+        //TODO: Error instead
         close();
+    }
+
+    //If there is already an art list set up... Clear it.
+    if(_masterQueue.size() != 0)
+    {
+        _masterQueue.clear();
     }
 
     QList<QPair<QString, QString>> flatList;

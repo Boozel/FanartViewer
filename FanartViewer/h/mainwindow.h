@@ -41,6 +41,8 @@ private:
     bool        SetAppDimesions();
     QColor      SetMatteBkgColor();
     
+    bool        InitViewer();
+    
     
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
