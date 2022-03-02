@@ -11,8 +11,6 @@
 
 #include <qdebug.h>
 
-#include <QTimer>
-#include <QElapsedTimer>
 #include <QSettings>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -26,21 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     QSettings settings("Boozel", "Fanart Viewer");
     if(settings.value("needs_init").toInt() == 0)   //Uninitialized
     {
-        while(_tld == NULL)
-        {
-            _tld = RunSetup();
-            
-            if(_tld == NULL)
-            {
-                QMessageBox::warning(this, tr("Fanart Viewer"),
-                                               tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
-                                               QMessageBox::Ok);
-            }
-        }
+        RunSetup(this);
     }
-
-    this->setStyleSheet("background-color: rgb(0,254,0)");
-    this->resize(1920, 1000);
     
     // Stolen from the internet to make the background transparent (http://www.ti-r.com/?Articles/Qt/QtWindowBackgroundTransparency)
     // ****************************************************
@@ -129,7 +114,29 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-QString MainWindow::RunSetup()
+bool MainWindow::RunSetup(QWidget* widget)
+{
+    while(_tld == NULL)
+    {
+        _tld = SetPictureTLD();
+        
+        if(_tld == NULL)
+        {
+            QMessageBox::warning(this, tr("Fanart Viewer"),
+                                           tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
+                                           QMessageBox::Ok);
+        }
+    }
+    
+
+    widget->setStyleSheet("background-color: " + _matteBkg.name());
+    widget->resize(_appW, _appH);
+    
+    return true;
+}
+
+
+QString MainWindow::SetPictureTLD()
 {
     QString dir = QFileDialog::getExistingDirectory(this,
             tr("Open Fanart Master Folder"),
@@ -137,6 +144,20 @@ QString MainWindow::RunSetup()
             QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     
     return dir;
+}
+
+
+bool MainWindow::SetAppDimesions()
+{
+    _appW = 1920;
+    _appH = 1080;
+    
+    return true;
+}
+
+QColor MainWindow::SetMatteBkgColor()
+{
+    return QColor(0, 254, 0);
 }
 
 void MainWindow::setupMasterQueue()

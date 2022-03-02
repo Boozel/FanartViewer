@@ -6,9 +6,9 @@
 #include <QThread>
 #include <QList>
 
-#include <QTimer>
 #include <QElapsedTimer>
 #include <QPropertyAnimation>
+#include <QColor>
 
 #include <QMutex>
 QT_BEGIN_NAMESPACE
@@ -31,14 +31,17 @@ public slots:
     void FindEndOfMovie(int);
 
 private:
-    QString RunSetup();
+    bool        RunSetup(QWidget* widget);
+    QString     SetPictureTLD();
+    bool        SetAppDimesions();
+    QColor      SetMatteBkgColor();
+    
     
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
     QMovie                                  *_currentMovie;
     QPixmap                                 _previousFirstFrame;
     QString                                 _prevMovieFilepath;
-    QString                                 _tld;
     bool                                    _bJustLaunched;
     bool                                    _bFirstPlay;
     bool                                    _bReleaseGif;
@@ -48,5 +51,11 @@ private:
     QElapsedTimer                           _elapsedTimer;
     QPropertyAnimation                      *_slideOut;
     QMutex                                  _gifMutex;
+    
+    // App settings
+    QString                                 _tld;
+    int                                     _appW;
+    int                                     _appH;
+    QColor                                  _matteBkg;
 };
 #endif // MAINWINDOW_H
