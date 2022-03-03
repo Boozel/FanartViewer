@@ -78,7 +78,7 @@ void MainWindow::SetMenuBar()
     _setWindowSize = new QAction(tr("&Set Size"), this);
     _setWindowSize->setShortcuts(QKeySequence::Open);
     _setWindowSize->setStatusTip(tr("Change the window's size."));
-    connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(GetTimeToDisplayDialog()));
+    connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(GetDimensionsDialog()));
     _settingsMenu->addAction(_setWindowSize);
     
     // Setup action
