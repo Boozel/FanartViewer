@@ -21,10 +21,25 @@
 
 void MainWindow::resizeEvent(QResizeEvent*)
 {
+    SetGeometry();
+}
+
+bool MainWindow::SetGeometry(void)
+{
     SetAppDimesions(this->geometry().width(), this->geometry().height());
+    _ui->defaultLabel->updateGeometry();
+    _picDisplayLabel->updateGeometry();
+    _picDisplayLabelPrevious->updateGeometry();
     
     SetAnimation();
 }
+
+
+void MainWindow::showEvent( QShowEvent* )
+{
+    SetGeometry();
+    Update();
+} 
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -133,8 +148,10 @@ bool MainWindow::RunSetup(bool fullinit)
     _picDisplayLabelPrevious = new QLabel();
 
     //label gets positioned above textBrowser and is an overlay
+    _picDisplayLabel->setMinimumSize(1,1);
+    _picDisplayLabelPrevious->setMinimumSize(1,1);
     layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
-    layout->addWidget(_picDisplayLabelPrevious, 0, 0,  Qt::AlignCenter | Qt::AlignTop);
+    layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1,  Qt::AlignCenter | Qt::AlignTop);
     InitViewer();
     return true;
 }
@@ -175,9 +192,10 @@ bool MainWindow::SetAnimation()
 {
     _slideOut->setDuration(2000);
     _slideOut->setEasingCurve(QEasingCurve::InQuad);
-    _slideOut->setStartValue(QRect(_picDisplayLabel->geometry()));
-    _slideOut->setEndValue(QRect((-1)*_picDisplayLabel->geometry().width(), _picDisplayLabel->geometry().y(), _picDisplayLabel->geometry().width(), _picDisplayLabel->geometry().height()));
+    _slideOut->setStartValue(QRect(_ui->defaultLabel->geometry()));
+    _slideOut->setEndValue(QRect((-1)*_ui->defaultLabel->geometry().width(), _ui->defaultLabel->geometry().y(), _ui->defaultLabel->geometry().width(), _ui->defaultLabel->geometry().height()));
     
+    qDebug() << _ui->defaultLabel->geometry().width();
     return true;
 }
 
@@ -254,10 +272,6 @@ bool MainWindow::InitViewer()
     // Randomize and queue all images
     setupMasterQueue();
     _queuepos = 0;
-
-    //   run our Update method - throw up some art
-    Update();
-    SetAnimation();
 }
 
 void MainWindow::setupMasterQueue()
@@ -366,8 +380,8 @@ void MainWindow::Update()
     {
         close();
     }
-
-    if (!_bJustLaunched)
+    
+    if(!_bJustLaunched)
     {
         // Set the previous image label to the first frame of the previous image
         _picDisplayLabelPrevious->setPixmap(_previousFirstFrame.scaled(_picDisplayLabelPrevious->width(), _picDisplayLabelPrevious->height(), Qt::KeepAspectRatio));
@@ -401,7 +415,7 @@ void MainWindow::Update()
     }
 
     // Create the useable scaling data
-    QSize scale = scaletest.scaled(_picDisplayLabel->width(), _picDisplayLabel->height(), Qt::KeepAspectRatio).size();
+    QSize scale = scaletest.scaled(_ui->defaultLabel->width(), _ui->defaultLabel->height(), Qt::KeepAspectRatio).size();
 
     // Put the picture into the application's render
     _currentMovie->setScaledSize(scale);

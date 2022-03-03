@@ -47,8 +47,10 @@ private:
     
     bool        InitViewer();
     bool        SetAnimation();
+    bool        SetGeometry();
     
     void resizeEvent(QResizeEvent*);
+    void showEvent(QShowEvent*);
     
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
