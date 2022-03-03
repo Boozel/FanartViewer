@@ -12,6 +12,8 @@
 #include <QColor>
 #include <QMenuBar>
 #include <QAction>
+#include <QLabel>
+
 
 #include <QMutex>
 QT_BEGIN_NAMESPACE
@@ -31,6 +33,7 @@ public:
 public slots:
     bool RunForcedSetupDlg();
     bool SetMatteBkgColorDlg();
+    QPair<int,int> CreateInputDialog(void);
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -39,11 +42,13 @@ public slots:
 private:
     bool        RunSetup(bool fullinit);
     QString     SetPictureTLD();
-    bool        SetAppDimesions();
+    bool        SetAppDimesions(int, int);
     void        SetMatteBkgColor(QColor);
     
     bool        InitViewer();
+    bool        SetAnimation();
     
+    void resizeEvent(QResizeEvent*);
     
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
@@ -60,6 +65,10 @@ private:
     QPropertyAnimation                      *_slideOut;
     QMutex                                  _gifMutex;
     
+    // Fancy labels
+    QLabel                                  *_picDisplayLabel;
+    QLabel                                  *_picDisplayLabelPrevious;
+    
     // App settings
     QSettings                               *_settings;
     QString                                 _tld;
@@ -71,5 +80,6 @@ private:
     QMenu                                   *_settingsMenu;
     QAction                                 *_runSetupDlg;
     QAction                                 *_setMatteColorDlg;
+    QAction                                 *_setWindowSize;
 };
 #endif // MAINWINDOW_H

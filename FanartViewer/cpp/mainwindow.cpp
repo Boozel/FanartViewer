@@ -14,6 +14,17 @@
 #include <QFileDialog>
 #include <QColorDialog>
 #include <QMessageBox>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QGridLayout>
+#include <QDialogButtonBox>
+
+void MainWindow::resizeEvent(QResizeEvent*)
+{
+    SetAppDimesions(this->geometry().width(), this->geometry().height());
+    
+    SetAnimation();
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,6 +58,13 @@ void MainWindow::SetMenuBar()
     _setMatteColorDlg->setStatusTip(tr("Change transparency color."));
     connect(_setMatteColorDlg, SIGNAL(triggered()), this, SLOT(SetMatteBkgColorDlg()));
     _settingsMenu->addAction(_setMatteColorDlg);
+    
+    // Setup action
+    _setWindowSize = new QAction(tr("&Set Size"), this);
+    _setWindowSize->setShortcuts(QKeySequence::Open);
+    _setWindowSize->setStatusTip(tr("Change the window's size."));
+    connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(CreateInputDialog()));
+    _settingsMenu->addAction(_setWindowSize);
 }
 
 
@@ -103,10 +121,20 @@ bool MainWindow::RunSetup(bool fullinit)
         SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>()):
         SetMatteBkgColor(QColor(0,254,0)));
     
+    (_settings->value("window_size_w") != 0 ?
+        SetAppDimesions(_settings->value("window_size_w").value<int>(), _settings->value("window_size_h").value<int>()) :
+        SetAppDimesions(480,270));
+    
     SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>());
-    SetAppDimesions();
     _tld = _settings->value("pictures_dir").value<QString>();
-    this->resize(_appW, _appH);
+    
+    QGridLayout *layout = _ui->imageDisplayGrid;
+    _picDisplayLabel = new QLabel();
+    _picDisplayLabelPrevious = new QLabel();
+
+    //label gets positioned above textBrowser and is an overlay
+    layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
+    layout->addWidget(_picDisplayLabelPrevious, 0, 0,  Qt::AlignCenter | Qt::AlignTop);
     InitViewer();
     return true;
 }
@@ -123,10 +151,15 @@ QString MainWindow::SetPictureTLD()
 }
 
 
-bool MainWindow::SetAppDimesions()
+bool MainWindow::SetAppDimesions(int width, int height)
 {
-    _appW = 1920;
-    _appH = 1080;
+    _appW = width;
+    _appH = height;
+    
+    _settings->setValue("window_size_w", width);
+    _settings->setValue("window_size_h", height);
+    
+    this->resize(_appW, _appH);
     
     return true;
 }
@@ -138,6 +171,16 @@ void MainWindow::SetMatteBkgColor(QColor color)
     this->setStyleSheet("background-color: " + _matteBkg.name());
 }
 
+bool MainWindow::SetAnimation()
+{
+    _slideOut->setDuration(2000);
+    _slideOut->setEasingCurve(QEasingCurve::InQuad);
+    _slideOut->setStartValue(QRect(_picDisplayLabel->geometry()));
+    _slideOut->setEndValue(QRect((-1)*_picDisplayLabel->geometry().width(), _picDisplayLabel->geometry().y(), _picDisplayLabel->geometry().width(), _picDisplayLabel->geometry().height()));
+    
+    return true;
+}
+
 bool MainWindow::InitViewer()
 {    
     // Initialize some stuff
@@ -145,12 +188,7 @@ bool MainWindow::InitViewer()
     _bFirstPlay = true;
     _bReleaseGif = false;
     _currentMovie = new QMovie();
-
-    _slideOut = new QPropertyAnimation(_ui->picDisplayLabelPrevious, "geometry");
-    _slideOut->setDuration(2000);
-    _slideOut->setEasingCurve(QEasingCurve::InQuad);
-    _slideOut->setStartValue(QRect(_ui->picDisplayLabelPrevious->geometry().x(), _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
-    _slideOut->setEndValue(QRect(-1920, _ui->picDisplayLabelPrevious->geometry().y(), _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
+    _slideOut = new QPropertyAnimation(_picDisplayLabelPrevious, "geometry");
     connect(_slideOut, SIGNAL(finished()), this, SLOT(ResetOldImageLabel()));
 
     // Retrieve all art files
@@ -210,8 +248,8 @@ bool MainWindow::InitViewer()
     }
 
     // Hide the "previous" image label - there is currently no previous image.
-    _ui->picDisplayLabelPrevious->setVisible(false);
-    _ui->picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
+    _picDisplayLabelPrevious->setVisible(false);
+    _picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
 
     // Randomize and queue all images
     setupMasterQueue();
@@ -219,6 +257,7 @@ bool MainWindow::InitViewer()
 
     //   run our Update method - throw up some art
     Update();
+    SetAnimation();
 }
 
 void MainWindow::setupMasterQueue()
@@ -331,7 +370,7 @@ void MainWindow::Update()
     if (!_bJustLaunched)
     {
         // Set the previous image label to the first frame of the previous image
-        _ui->picDisplayLabelPrevious->setPixmap(_previousFirstFrame.scaled(_ui->picDisplayLabelPrevious->width(), _ui->picDisplayLabelPrevious->height(), Qt::KeepAspectRatio));
+        _picDisplayLabelPrevious->setPixmap(_previousFirstFrame.scaled(_picDisplayLabelPrevious->width(), _picDisplayLabelPrevious->height(), Qt::KeepAspectRatio));
 
         // Clear memory for the next movie that will be loaded.
         if (_currentMovie != nullptr)
@@ -362,11 +401,11 @@ void MainWindow::Update()
     }
 
     // Create the useable scaling data
-    QSize scale = scaletest.scaled(_ui->picDisplayLabel->width(), _ui->picDisplayLabel->height(), Qt::KeepAspectRatio).size();
+    QSize scale = scaletest.scaled(_picDisplayLabel->width(), _picDisplayLabel->height(), Qt::KeepAspectRatio).size();
 
     // Put the picture into the application's render
     _currentMovie->setScaledSize(scale);
-    _ui->picDisplayLabel->setMovie(_currentMovie);
+    _picDisplayLabel->setMovie(_currentMovie);
 
     // Connect a signal that fires each frame - since .GIFs are fucky, we can't estimate their length.
     //      .GIFs also don't signal an end frame to QMovie, so... we have to just wait until we find the final frame.
@@ -391,7 +430,7 @@ void MainWindow::Update()
     // Make the label that contains the previous image visible
     if (!_bJustLaunched)
     {
-        _ui->picDisplayLabelPrevious->setVisible(true);
+        _picDisplayLabelPrevious->setVisible(true);
     }
 
     // Turn off this flag - only true the first time Update() runs since Launch.
@@ -415,8 +454,46 @@ void MainWindow::ResetOldImageLabel()
     // This flag is used to prevent a very short .GIF from ending before the slide out animation completes.
     _bReleaseGif = true;
     // Hide the old image
-    _ui->picDisplayLabelPrevious->setVisible(false);
+    _picDisplayLabelPrevious->setVisible(false);
     // Reset the image container to its default position (but invisible now)
-    _ui->picDisplayLabelPrevious->setGeometry(QRect(0, 0, _ui->picDisplayLabelPrevious->geometry().width(), _ui->picDisplayLabelPrevious->geometry().height()));
+    _picDisplayLabelPrevious->setGeometry(_picDisplayLabel->geometry());
+}
 
+// https://stackoverflow.com/a/17512615
+QPair<int,int> MainWindow::CreateInputDialog(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+
+    // Add some text above the fields
+    form.addRow(new QLabel("The question ?"));
+
+    // Add the lineEdits with their respective labels
+    QPair<int, int> fields;
+    
+    QLineEdit *w_te = new QLineEdit(&dialog);
+    QString w_label_str = QString("Width: ");
+    form.addRow(w_label_str, w_te);
+    
+    QLineEdit *h_te = new QLineEdit(&dialog);
+    QString h_label_str = QString("Height: ");
+    form.addRow(h_label_str, h_te);
+
+    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               Qt::Horizontal, &dialog);
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    // Show the dialog as modal
+    if (dialog.exec() == QDialog::Accepted) {
+        // If the user didn't dismiss the dialog, do something with the fields
+        fields.first = w_te->text().toInt();
+        fields.second = h_te->text().toInt();
+    }
+    
+    SetAppDimesions(fields.first, fields.second);
+    return fields;
 }
