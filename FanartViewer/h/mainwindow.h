@@ -6,9 +6,14 @@
 #include <QThread>
 #include <QList>
 
-#include <QTimer>
 #include <QElapsedTimer>
+#include <QSettings>
 #include <QPropertyAnimation>
+#include <QColor>
+#include <QMenuBar>
+#include <QAction>
+#include <QLabel>
+
 
 #include <QMutex>
 QT_BEGIN_NAMESPACE
@@ -26,11 +31,29 @@ public:
     void DetermineLengthToDisplay(QMovie*);
 
 public slots:
+    bool RunForcedSetupDlg();
+    bool SetMatteBkgColorDlg();
+    void GetDimensionsDialog(void);
+    void GetTimeToDisplayDialog(void);
+    void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
-    void FindEndOfMovie(int);
+    void FindEndOfMovie();
 
 private:
+    bool        RunSetup(bool fullinit);
+    QString     SetPictureTLD();
+    bool        SetAppDimesions(int, int);
+    void        SetMatteBkgColor(QColor);
+    void        SetTimeToDisplay(int);
+    
+    bool        InitViewer();
+    bool        SetAnimation();
+    bool        SetGeometryLabels();
+    
+    void resizeEvent(QResizeEvent*);
+    void showEvent(QShowEvent*);
+    
     Ui::MainWindow                          *_ui;
     QList<QPair<QString, QList<QString>>>   _artDirectory;
     QMovie                                  *_currentMovie;
@@ -45,5 +68,24 @@ private:
     QElapsedTimer                           _elapsedTimer;
     QPropertyAnimation                      *_slideOut;
     QMutex                                  _gifMutex;
+    
+    // Fancy labels
+    QLabel                                  *_picDisplayLabel;
+    QLabel                                  *_picDisplayLabelPrevious;
+    
+    // App settings
+    QSettings                               *_settings;
+    QString                                 _tld;
+    int                                     _appW;
+    int                                     _appH;
+    QColor                                  _matteBkg;
+    int                                     _timeToDisplay;
+    
+    // Menu Navs
+    QMenu                                   *_settingsMenu;
+    QAction                                 *_runSetupDlg;
+    QAction                                 *_setMatteColorDlg;
+    QAction                                 *_setWindowSize;
+    QAction                                 *_setTimeToDisplay;
 };
 #endif // MAINWINDOW_H
