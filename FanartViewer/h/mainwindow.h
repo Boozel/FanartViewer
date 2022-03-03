@@ -13,6 +13,7 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QLabel>
+#include <qshortcut.h>
 
 
 #include <QMutex>
@@ -39,6 +40,7 @@ public slots:
     void Update(void);
     void ResetOldImageLabel(void);
     void FindEndOfMovie();
+    void toggleMenuBar(void);
 
 private:
     bool        RunSetup(bool fullinit);
@@ -80,9 +82,11 @@ private:
     int                                     _appH;
     QColor                                  _matteBkg;
     int                                     _timeToDisplay;
+    QShortcut                               *_menuBarSC;
     
     // Menu Navs
     QMenu                                   *_settingsMenu;
+    QAction                                 *_toggleMenuBarVis;
     QAction                                 *_runSetupDlg;
     QAction                                 *_setMatteColorDlg;
     QAction                                 *_setWindowSize;
