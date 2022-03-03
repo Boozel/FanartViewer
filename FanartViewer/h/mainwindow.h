@@ -33,7 +33,8 @@ public:
 public slots:
     bool RunForcedSetupDlg();
     bool SetMatteBkgColorDlg();
-    QPair<int,int> CreateInputDialog(void);
+    void GetDimensionsDialog(void);
+    void GetTimeToDisplayDialog(void);
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -44,10 +45,11 @@ private:
     QString     SetPictureTLD();
     bool        SetAppDimesions(int, int);
     void        SetMatteBkgColor(QColor);
+    void        SetTimeToDisplay(int);
     
     bool        InitViewer();
     bool        SetAnimation();
-    bool        SetGeometry();
+    bool        SetGeometryLabels();
     
     void resizeEvent(QResizeEvent*);
     void showEvent(QShowEvent*);
@@ -77,11 +79,13 @@ private:
     int                                     _appW;
     int                                     _appH;
     QColor                                  _matteBkg;
+    int                                     _timeToDisplay;
     
     // Menu Navs
     QMenu                                   *_settingsMenu;
     QAction                                 *_runSetupDlg;
     QAction                                 *_setMatteColorDlg;
     QAction                                 *_setWindowSize;
+    QAction                                 *_setTimeToDisplay;
 };
 #endif // MAINWINDOW_H

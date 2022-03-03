@@ -21,10 +21,10 @@
 
 void MainWindow::resizeEvent(QResizeEvent*)
 {
-    SetGeometry();
+    SetGeometryLabels();
 }
 
-bool MainWindow::SetGeometry(void)
+bool MainWindow::SetGeometryLabels(void)
 {
     SetAppDimesions(this->geometry().width(), this->geometry().height());
     _ui->defaultLabel->updateGeometry();
@@ -37,7 +37,7 @@ bool MainWindow::SetGeometry(void)
 
 void MainWindow::showEvent( QShowEvent* )
 {
-    SetGeometry();
+    SetGeometryLabels();
     Update();
 } 
 
@@ -78,8 +78,15 @@ void MainWindow::SetMenuBar()
     _setWindowSize = new QAction(tr("&Set Size"), this);
     _setWindowSize->setShortcuts(QKeySequence::Open);
     _setWindowSize->setStatusTip(tr("Change the window's size."));
-    connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(CreateInputDialog()));
+    connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(GetTimeToDisplayDialog()));
     _settingsMenu->addAction(_setWindowSize);
+    
+    // Setup action
+    _setTimeToDisplay = new QAction(tr("&Set Rotation Timer"), this);
+    _setTimeToDisplay->setShortcuts(QKeySequence::Open);
+    _setTimeToDisplay->setStatusTip(tr("Change the speed images rotate."));
+    connect(_setTimeToDisplay, SIGNAL(triggered()), this, SLOT(GetTimeToDisplayDialog()));
+    _settingsMenu->addAction(_setTimeToDisplay);
 }
 
 
@@ -140,6 +147,10 @@ bool MainWindow::RunSetup(bool fullinit)
         SetAppDimesions(_settings->value("window_size_w").value<int>(), _settings->value("window_size_h").value<int>()) :
         SetAppDimesions(480,270));
     
+    (_settings->value("time_to_display") != 0 ?
+        SetTimeToDisplay(_settings->value("time_to_display").value<int>()) :
+        SetTimeToDisplay(5000));
+    
     SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>());
     _tld = _settings->value("pictures_dir").value<QString>();
     
@@ -192,10 +203,8 @@ bool MainWindow::SetAnimation()
 {
     _slideOut->setDuration(2000);
     _slideOut->setEasingCurve(QEasingCurve::InQuad);
-    _slideOut->setStartValue(QRect(_ui->defaultLabel->geometry()));
-    _slideOut->setEndValue(QRect((-1)*_ui->defaultLabel->geometry().width(), _ui->defaultLabel->geometry().y(), _ui->defaultLabel->geometry().width(), _ui->defaultLabel->geometry().height()));
-    
-    qDebug() << _ui->defaultLabel->geometry().width();
+    _slideOut->setStartValue(QRect(_picDisplayLabelPrevious->geometry()));
+    _slideOut->setEndValue(QRect((-1)*_picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().y(), _picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().height()));
     return true;
 }
 
@@ -369,7 +378,7 @@ void MainWindow::DetermineLengthToDisplay(QMovie* inMovie)
     else
     {
         _bIsGif = false;
-        QTimer::singleShot(5000, this, SLOT(Update()));
+        QTimer::singleShot(_settings->value("time_to_display").value<int>(), this, SLOT(Update()));
     }
 }
 
@@ -392,6 +401,8 @@ void MainWindow::Update()
             delete _currentMovie;
         }
     }
+    
+    SetGeometryLabels();
 
     // Store the next image
     _currentMovie = new QMovie(_masterQueue[_queuepos].second);
@@ -474,14 +485,14 @@ void MainWindow::ResetOldImageLabel()
 }
 
 // https://stackoverflow.com/a/17512615
-QPair<int,int> MainWindow::CreateInputDialog(void)
+void MainWindow::GetDimensionsDialog(void)
 {
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
 
     // Add some text above the fields
-    form.addRow(new QLabel("The question ?"));
+    form.addRow(new QLabel("Set window width and height"));
 
     // Add the lineEdits with their respective labels
     QPair<int, int> fields;
@@ -509,5 +520,39 @@ QPair<int,int> MainWindow::CreateInputDialog(void)
     }
     
     SetAppDimesions(fields.first, fields.second);
-    return fields;
+}
+
+void MainWindow::SetTimeToDisplay(int ttd)
+{
+    _timeToDisplay = ttd;
+    
+    _settings->setValue("time_to_display", ttd);
+}
+
+// https://stackoverflow.com/a/17512615
+void MainWindow::GetTimeToDisplayDialog(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+
+    // Add some text above the fields
+    form.addRow(new QLabel("Set delay between changing images (ms)"));
+
+    QLineEdit *ttd_le = new QLineEdit(&dialog);
+    QString ttd_l = QString("Time (ms): ");
+    form.addRow(ttd_l, ttd_le);
+
+    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                               Qt::Horizontal, &dialog);
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    // Show the dialog as modal
+    if (dialog.exec() == QDialog::Accepted) {
+        // If the user didn't dismiss the dialog, do something with the fields
+        SetTimeToDisplay(ttd_le->text().toInt());
+    }
 }
