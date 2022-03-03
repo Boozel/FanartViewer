@@ -32,6 +32,8 @@ bool MainWindow::SetGeometryLabels(void)
     _picDisplayLabelPrevious->updateGeometry();
     
     SetAnimation();
+
+    return true;
 }
 
 
@@ -59,6 +61,8 @@ MainWindow::~MainWindow()
 void MainWindow::SetMenuBar()
 {
     _settingsMenu = menuBar()->addMenu(tr("&Settings"));
+
+    menuBar()->setStyleSheet("background-color: rgb(255,255,255)");
     
     // Setup action
     _runSetupDlg = new QAction(tr("&Run Setup"), this);
@@ -138,16 +142,16 @@ bool MainWindow::RunSetup(bool fullinit)
     if(fullinit == true)
     {
         SetMenuBar();
-    }
-    (_settings->value("matte_bkg") != 0 ?
+    };
+    (_settings->value("matte_bkg") != QVariant::Invalid ?
         SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>()):
         SetMatteBkgColor(QColor(0,254,0)));
     
-    (_settings->value("window_size_w") != 0 ?
+    (_settings->value("window_size_w") != QVariant::Invalid ?
         SetAppDimesions(_settings->value("window_size_w").value<int>(), _settings->value("window_size_h").value<int>()) :
         SetAppDimesions(480,270));
     
-    (_settings->value("time_to_display") != 0 ?
+    (_settings->value("time_to_display") != QVariant::Invalid ?
         SetTimeToDisplay(_settings->value("time_to_display").value<int>()) :
         SetTimeToDisplay(5000));
     
@@ -281,6 +285,7 @@ bool MainWindow::InitViewer()
     // Randomize and queue all images
     setupMasterQueue();
     _queuepos = 0;
+    return true;
 }
 
 void MainWindow::setupMasterQueue()
@@ -325,7 +330,7 @@ void MainWindow::setupMasterQueue()
 }
 
 
-void MainWindow::FindEndOfMovie(int frame)
+void MainWindow::FindEndOfMovie()
 {
     // Since this is called from a signal that rapid fires, let's mutex it to be safe.
     if (_gifMutex.tryLock())

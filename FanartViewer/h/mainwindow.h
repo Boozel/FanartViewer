@@ -38,7 +38,7 @@ public slots:
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
-    void FindEndOfMovie(int);
+    void FindEndOfMovie();
 
 private:
     bool        RunSetup(bool fullinit);
