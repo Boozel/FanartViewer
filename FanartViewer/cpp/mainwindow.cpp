@@ -18,6 +18,12 @@
 #include <QLineEdit>
 #include <QGridLayout>
 #include <QDialogButtonBox>
+#include <qkeysequence.h>
+
+void MainWindow::toggleMenuBar(void)
+{
+    (menuBar()->isVisible() ? menuBar()->setVisible(false) : menuBar()->setVisible(true));
+}
 
 void MainWindow::resizeEvent(QResizeEvent*)
 {
@@ -64,30 +70,36 @@ void MainWindow::SetMenuBar()
 
     menuBar()->setStyleSheet("background-color: rgb(255,255,255)");
     
+    // menu toggle action
+    _toggleMenuBarVis = new QAction(tr("&Show/Hide Menu Bar (CTRL+H)"), this);
+    _toggleMenuBarVis->setStatusTip(tr("Toggles this menu bar."));
+    connect(_toggleMenuBarVis, SIGNAL(triggered()), this, SLOT(toggleMenuBar()));
+    _settingsMenu->addAction(_toggleMenuBarVis);
+    
     // Setup action
     _runSetupDlg = new QAction(tr("&Run Setup"), this);
-    _runSetupDlg->setShortcuts(QKeySequence::Open);
+    _runSetupDlg->setShortcuts(QKeySequence::Redo);
     _runSetupDlg->setStatusTip(tr("Run the initial setup process again."));
     connect(_runSetupDlg, SIGNAL(triggered()), this, SLOT(RunForcedSetupDlg()));
     _settingsMenu->addAction(_runSetupDlg);
     
     // Setup action
     _setMatteColorDlg = new QAction(tr("&Change Matte"), this);
-    _setMatteColorDlg->setShortcuts(QKeySequence::Open);
+    _setMatteColorDlg->setShortcuts(QKeySequence::Copy);
     _setMatteColorDlg->setStatusTip(tr("Change transparency color."));
     connect(_setMatteColorDlg, SIGNAL(triggered()), this, SLOT(SetMatteBkgColorDlg()));
     _settingsMenu->addAction(_setMatteColorDlg);
     
     // Setup action
     _setWindowSize = new QAction(tr("&Set Size"), this);
-    _setWindowSize->setShortcuts(QKeySequence::Open);
+    _setWindowSize->setShortcuts(QKeySequence::Save);
     _setWindowSize->setStatusTip(tr("Change the window's size."));
     connect(_setWindowSize, SIGNAL(triggered()), this, SLOT(GetDimensionsDialog()));
     _settingsMenu->addAction(_setWindowSize);
     
     // Setup action
     _setTimeToDisplay = new QAction(tr("&Set Rotation Timer"), this);
-    _setTimeToDisplay->setShortcuts(QKeySequence::Open);
+    _setTimeToDisplay->setShortcuts(QKeySequence::AddTab);
     _setTimeToDisplay->setStatusTip(tr("Change the speed images rotate."));
     connect(_setTimeToDisplay, SIGNAL(triggered()), this, SLOT(GetTimeToDisplayDialog()));
     _settingsMenu->addAction(_setTimeToDisplay);
@@ -142,6 +154,8 @@ bool MainWindow::RunSetup(bool fullinit)
     if(fullinit == true)
     {
         SetMenuBar();
+        _menuBarSC = new QShortcut(QKeySequence(tr("Ctrl+H")), this);
+        connect(_menuBarSC, SIGNAL(activated()), this, SLOT(toggleMenuBar(void)));
     };
     (_settings->value("matte_bkg") != QVariant::Invalid ?
         SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>()):
@@ -205,7 +219,7 @@ void MainWindow::SetMatteBkgColor(QColor color)
 
 bool MainWindow::SetAnimation()
 {
-    _slideOut->setDuration(2000);
+    _slideOut->setDuration(_settings->value("time_to_display").value<int>() * float(2.0 / 5.0));
     _slideOut->setEasingCurve(QEasingCurve::InQuad);
     _slideOut->setStartValue(QRect(_picDisplayLabelPrevious->geometry()));
     _slideOut->setEndValue(QRect((-1)*_picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().y(), _picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().height()));
@@ -439,7 +453,7 @@ void MainWindow::Update()
 
     // Connect a signal that fires each frame - since .GIFs are fucky, we can't estimate their length.
     //      .GIFs also don't signal an end frame to QMovie, so... we have to just wait until we find the final frame.
-    connect(_currentMovie, SIGNAL(frameChanged(int)), this, SLOT(FindEndOfMovie(int)));
+    connect(_currentMovie, SIGNAL(frameChanged(int)), this, SLOT(FindEndOfMovie()));
 
     // Start playing it.
     _currentMovie->start();
