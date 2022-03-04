@@ -1,18 +1,33 @@
 # FanartViewer
+- By Boozel
 
-# Use READ THIS
+# Use; READ THIS
 
-- This has like, no validation. If you mess it up, it WILL RUN UNTIL YOU KILL IT via TaskManager
+- Fanart Viewer will immediately open a file select dialogue the first time you launch it. Point this dialogue to the folder that contains all of your artist folders.
 
-- Before you THINK about running it fill the 'pictures' folder with images like so:
+- The required directory layout to function is as follows:
 
-   + Folder names as the artist's credit (e.g. '@JeffBezos')
+	- Container folder (point the file select here)
+		+ artist_name1
+			+ artist_image1.png
+			+ artist_image2.png
+		+ artist_name2
+			+ artist_image1.png
+			+ artist_image2.png
+		+ etc.
+	
+# User Options and Shortcuts:
+	- CTRL+H
+		+ Show/Hide the settings ribbon
+	- CTRL+Y
+		+ Run initial setup again (allows you to change art directories)
+	- CTRL+C
+		+ Change background color matte (the 'green screen')
+	- CTRL+S
+		+ Change the size of Fanart Viewer using text entry (The window can be resized with click and drag without using this context)
+	- CTRL+T
+		+ Set the timer that dictates how long to linger on each image. Default is 5000 (5 seconds). Value entry is in milliseconds.
 
-   + Inside of an artist's folder, place all of their art
+Note that the shortcuts other than showing/hiding the settings ribbon will not work when the ribbon is hidden.
 
-# TODO:
-- Render the window before trying to load a picture so it doesn't run forever in the background if you mess up.
-- Validation to prevent hanging
-- Custom draw for a label object so we can get text with an outline
-- Configurable settings (set TLD for images, set image rotation speed)
-- Image cooldown so we don't load the same image multiple times / rapidly
+Please feel free to file any bugs as an issue, or email me at boozel1992 at gmail.
