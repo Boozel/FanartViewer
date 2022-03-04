@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "..\ui_mainwindow.h"
+#include "ui_mainwindow.h"
 
 #include <QDir>
 #include <QPixmap>
@@ -140,15 +140,22 @@ bool MainWindow::RunSetup(bool fullinit)
             
             if(_tld == NULL)
             {
-                int ret = QMessageBox::warning(this, tr("Fanart Viewer"),
-                                               tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."),
-                                               QMessageBox::Cancel | QMessageBox::Ok);
-                
+                QMessageBox inform;
+                inform.setText("Fanart Viewer");
+                inform.setStyleSheet("background-color: rgb(255,255,255)");
+                inform.setInformativeText(tr("Fanart Viewer requires you to point it to the folder that contains all of your fanart.\nPlease select your fanart folder."));
+                inform.setStandardButtons(QMessageBox::Cancel | QMessageBox::Ok);
+                inform.setDefaultButton(QMessageBox::Ok);
+                int ret = inform.exec();
                 if(ret == QMessageBox::Cancel)
                 {
-                    QMessageBox::warning(this, tr("Fanart Viewer"),
-                                                   tr("Fanart Viewer will now close."),
-                                                   QMessageBox::Ok);
+                    QMessageBox quit;
+                    quit.setText("Fanart Viewer");
+                    quit.setStyleSheet("background-color: rgb(255,255,255)");
+                    quit.setInformativeText(tr("Fanart Viewer can't operate without a pictures folder.\nFanart Viewer will now close."));
+                    quit.setStandardButtons(QMessageBox::Ok);
+                    quit.setDefaultButton(QMessageBox::Ok);
+                    quit.exec();
                     exit(0);
                 }
             }
@@ -555,6 +562,7 @@ void MainWindow::GetDimensionsDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
+    dialog.setStyleSheet("background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set window width and height"));
@@ -600,6 +608,7 @@ void MainWindow::GetTimeToDisplayDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
+    dialog.setStyleSheet("background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set delay between changing images (ms)"));
@@ -628,6 +637,7 @@ void MainWindow::GetWipeDirDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
+    dialog.setStyleSheet("background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set direction images will wipe to (left/right/up/down)"));
