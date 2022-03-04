@@ -36,6 +36,7 @@ public slots:
     bool SetMatteBkgColorDlg();
     void GetDimensionsDialog(void);
     void GetTimeToDisplayDialog(void);
+    void GetWipeDirDialog(void);
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -48,6 +49,7 @@ private:
     bool        SetAppDimesions(int, int);
     void        SetMatteBkgColor(QColor);
     void        SetTimeToDisplay(int);
+    void        SetWipeDir(int);
     
     bool        InitViewer();
     bool        SetAnimation();
@@ -78,6 +80,7 @@ private:
     // App settings
     QSettings                               *_settings;
     QString                                 _tld;
+    int                                     _wipedir;
     int                                     _appW;
     int                                     _appH;
     QColor                                  _matteBkg;
@@ -91,5 +94,6 @@ private:
     QAction                                 *_setMatteColorDlg;
     QAction                                 *_setWindowSize;
     QAction                                 *_setTimeToDisplay;
+    QAction                                 *_setWipeDir;
 };
 #endif // MAINWINDOW_H

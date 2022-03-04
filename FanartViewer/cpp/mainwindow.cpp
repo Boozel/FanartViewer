@@ -18,6 +18,7 @@
 #include <QLineEdit>
 #include <QGridLayout>
 #include <QDialogButtonBox>
+#include <qcombobox.h>
 #include <qkeysequence.h>
 
 void MainWindow::toggleMenuBar(void)
@@ -103,6 +104,13 @@ void MainWindow::SetMenuBar()
     _setTimeToDisplay->setStatusTip(tr("Change the speed images rotate."));
     connect(_setTimeToDisplay, SIGNAL(triggered()), this, SLOT(GetTimeToDisplayDialog()));
     _settingsMenu->addAction(_setTimeToDisplay);
+
+    // Setup action
+    _setWipeDir = new QAction(tr("&Set Wipe"), this);
+    _setWipeDir->setShortcuts(QKeySequence::Find);
+    _setWipeDir->setStatusTip(tr("Change the wipe direction."));
+    connect(_setWipeDir, SIGNAL(triggered()), this, SLOT(GetWipeDirDialog()));
+    _settingsMenu->addAction(_setWipeDir);
 }
 
 
@@ -168,6 +176,10 @@ bool MainWindow::RunSetup(bool fullinit)
     (_settings->value("time_to_display") != QVariant::Invalid ?
         SetTimeToDisplay(_settings->value("time_to_display").value<int>()) :
         SetTimeToDisplay(5000));
+
+    (_settings->value("wipe_dir") != QVariant::Invalid ?
+        SetWipeDir(_settings->value("wipe_dir").value<int>()) :
+        SetWipeDir(0));
     
     SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>());
     _tld = _settings->value("pictures_dir").value<QString>();
@@ -181,6 +193,7 @@ bool MainWindow::RunSetup(bool fullinit)
     _picDisplayLabelPrevious->setMinimumSize(1,1);
     layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
     layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1,  Qt::AlignCenter | Qt::AlignTop);
+    _ui->artistNameDisplayLabel->raise();
     InitViewer();
     return true;
 }
@@ -219,10 +232,43 @@ void MainWindow::SetMatteBkgColor(QColor color)
 
 bool MainWindow::SetAnimation()
 {
+    int w, h, x, y;
+    switch (_wipedir)
+    {
+        // Left
+        case 0:
+            x = (-1) * _ui->centralwidget->geometry().width();
+            y = _picDisplayLabelPrevious->geometry().y();
+            w = _picDisplayLabelPrevious->geometry().width();
+            h = _picDisplayLabelPrevious->geometry().height();
+            break;
+        // Down
+        case 1:
+            x = _picDisplayLabelPrevious->geometry().x();
+            y = _ui->centralwidget->geometry().y() + _picDisplayLabelPrevious->geometry().height();
+            w = _picDisplayLabelPrevious->geometry().width();
+            h = _picDisplayLabelPrevious->geometry().height();
+            break;
+            // Right
+        case 2:
+            x = _ui->centralwidget->geometry().width();
+            y = _picDisplayLabelPrevious->geometry().y();
+            w = _picDisplayLabelPrevious->geometry().width();
+            h = _picDisplayLabelPrevious->geometry().height();
+            break;
+            // Up
+        case 3:
+            x = _picDisplayLabelPrevious->geometry().x();
+            y = (-1) * _ui->centralwidget->geometry().height();
+            w = _picDisplayLabelPrevious->geometry().width();
+            h = _picDisplayLabelPrevious->geometry().height();
+            break;
+        
+    }
     _slideOut->setDuration(_settings->value("time_to_display").value<int>() * float(2.0 / 5.0));
     _slideOut->setEasingCurve(QEasingCurve::InQuad);
     _slideOut->setStartValue(QRect(_picDisplayLabelPrevious->geometry()));
-    _slideOut->setEndValue(QRect((-1)*_picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().y(), _picDisplayLabelPrevious->geometry().width(), _picDisplayLabelPrevious->geometry().height()));
+    _slideOut->setEndValue(QRect(x, y, w, h));
     return true;
 }
 
@@ -574,4 +620,44 @@ void MainWindow::GetTimeToDisplayDialog(void)
         // If the user didn't dismiss the dialog, do something with the fields
         SetTimeToDisplay(ttd_le->text().toInt());
     }
+}
+
+
+void MainWindow::GetWipeDirDialog(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+
+    // Add some text above the fields
+    form.addRow(new QLabel("Set direction images will wipe to (left/right/up/down)"));
+
+    QComboBox* dialogue = new QComboBox();
+    dialogue->addItem("Left");
+    dialogue->addItem("Down");
+    dialogue->addItem("Right");
+    dialogue->addItem("Up");
+    form.addRow(dialogue);
+
+    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+        Qt::Horizontal, &dialog);
+
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    // Show the dialog as modal
+    if (dialog.exec() == QDialog::Accepted) {
+        // If the user didn't dismiss the dialog, do something with the fields
+        SetWipeDir(dialogue->currentIndex());
+    }
+}
+
+
+void MainWindow::SetWipeDir(int wipedir)
+{
+    _wipedir = wipedir;
+
+    _settings->setValue("wipe_dir", _wipedir);
 }
