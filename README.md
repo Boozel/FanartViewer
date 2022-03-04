@@ -27,6 +27,8 @@
 		+ Change the size of Fanart Viewer using text entry (The window can be resized with click and drag without using this context)
 	- CTRL+T
 		+ Set the timer that dictates how long to linger on each image. Default is 5000 (5 seconds). Value entry is in milliseconds.
+	- CTRL+F
+		+ Set the direction that images will wipe away to.
 
 Note that the shortcuts other than showing/hiding the settings ribbon will not work when the ribbon is hidden.
 
