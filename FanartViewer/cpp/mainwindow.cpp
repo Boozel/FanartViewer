@@ -112,6 +112,13 @@ void MainWindow::SetMenuBar()
     _setWipeDir->setStatusTip(tr("Change the wipe direction."));
     connect(_setWipeDir, SIGNAL(triggered()), this, SLOT(GetWipeDirDialog()));
     _settingsMenu->addAction(_setWipeDir);
+    
+    // Setup action
+    _setAuthorMode = new QAction(tr("&Set Name Mode"), this);
+    _setAuthorMode->setShortcuts(QKeySequence::SelectAll);
+    _setAuthorMode->setStatusTip(tr("Change the way artist names are displayed."));
+    connect(_setAuthorMode, SIGNAL(triggered()), this, SLOT(GetAuthorModeDlg()));
+    _settingsMenu->addAction(_setAuthorMode);
 }
 
 
@@ -189,7 +196,10 @@ bool MainWindow::RunSetup(bool fullinit)
         SetWipeDir(_settings->value("wipe_dir").value<int>()) :
         SetWipeDir(0));
     
-    SetMatteBkgColor(_settings->value("matte_bkg").value<QColor>());
+    (_settings->value("author_mode") != QVariant::Invalid ?
+        SetAuthorMode(_settings->value("author_mode").value<bool>()) :
+        SetAuthorMode(false));
+    
     _tld = _settings->value("pictures_dir").value<QString>();
     
     QGridLayout *layout = _ui->imageDisplayGrid;
@@ -572,7 +582,7 @@ void MainWindow::GetDimensionsDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
-    dialog.setStyleSheet("background-color: rgb(255,255,255)");
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set window width and height"));
@@ -618,7 +628,7 @@ void MainWindow::GetTimeToDisplayDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
-    dialog.setStyleSheet("background-color: rgb(255,255,255)");
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set delay between changing images (ms)"));
@@ -647,7 +657,7 @@ void MainWindow::GetWipeDirDialog(void)
     QDialog dialog(this);
     // Use a layout allowing to have a label next to each field
     QFormLayout form(&dialog);
-    dialog.setStyleSheet("background-color: rgb(255,255,255)");
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
 
     // Add some text above the fields
     form.addRow(new QLabel("Set direction images will wipe to (left/right/up/down)"));
@@ -680,6 +690,58 @@ void MainWindow::SetWipeDir(int wipedir)
     _wipedir = wipedir;
 
     _settings->setValue("wipe_dir", _wipedir);
+}
+
+void MainWindow::GetAuthorModeDlg(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
+
+    // Add some text above the fields
+    form.addRow(new QLabel("Display the author name over the art?"));
+
+    QComboBox* dialogue = new QComboBox();
+    dialogue->addItem("No");
+    dialogue->addItem("Yes");
+    form.addRow(dialogue);
+
+    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+        Qt::Horizontal, &dialog);
+
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    // Show the dialog as modal
+    if (dialog.exec() == QDialog::Accepted) {
+        // If the user didn't dismiss the dialog, do something with the fields
+        SetAuthorMode((bool)dialogue->currentIndex());
+    }
+}
+
+void MainWindow::SetAuthorMode(bool isOverlayEnabled)
+{
+    _authorModeOverlayEnabled = isOverlayEnabled;
+
+    _settings->setValue("author_mode", _authorModeOverlayEnabled);
+    
+    if(_authorModeOverlayEnabled)
+    {
+        _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgb(0,0,0,0)");
+        QGridLayout *layout = _ui->imageDisplayGrid;
+        layout->addWidget(_ui->artistNameDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignBottom);
+    }
+    else
+    {
+        QLayout *layout = _ui->centralwidget->layout();
+        
+        _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgb(0,0,0,255)");
+        //_ui->artistNameDisplayLabel->setParent(_ui->centralwidget);
+        layout->addWidget(_ui->artistNameDisplayLabel);
+    }
 }
 
 QImage MainWindow::setAuthorText(QString input)

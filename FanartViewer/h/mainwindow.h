@@ -38,6 +38,7 @@ public slots:
     void GetDimensionsDialog(void);
     void GetTimeToDisplayDialog(void);
     void GetWipeDirDialog(void);
+    void GetAuthorModeDlg(void);
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -51,6 +52,7 @@ private:
     void        SetMatteBkgColor(QColor);
     void        SetTimeToDisplay(int);
     void        SetWipeDir(int);
+    void        SetAuthorMode(bool);
     
     bool        InitViewer();
     bool        SetAnimation();
@@ -85,6 +87,7 @@ private:
     int                                     _wipedir;
     int                                     _appW;
     int                                     _appH;
+    int                                     _authorModeOverlayEnabled;
     QColor                                  _matteBkg;
     int                                     _timeToDisplay;
     QShortcut                               *_menuBarSC;
@@ -97,5 +100,6 @@ private:
     QAction                                 *_setWindowSize;
     QAction                                 *_setTimeToDisplay;
     QAction                                 *_setWipeDir;
+    QAction                                 *_setAuthorMode;
 };
 #endif // MAINWINDOW_H
