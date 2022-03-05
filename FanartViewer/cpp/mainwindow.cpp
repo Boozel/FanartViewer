@@ -21,6 +21,8 @@
 #include <qcombobox.h>
 #include <qkeysequence.h>
 #include <QFontMetrics>
+#include <qpainter.h>
+#include <qpainterpath.h>
 
 void MainWindow::toggleMenuBar(void)
 {
@@ -770,7 +772,7 @@ QImage MainWindow::setAuthorText(QString input)
 
     QPainter painter(&author);
     painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(Qt::black, 2, Qt::SolidLine);
+    QPen pen(Qt::black, 3, Qt::SolidLine);
     painter.setPen(pen);
     painter.setBrush(Qt::white);
     painter.drawPath(path);
