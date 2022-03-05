@@ -14,6 +14,7 @@
 #include <QAction>
 #include <QLabel>
 #include <qshortcut.h>
+#include <QImage>
 
 
 #include <QMutex>
@@ -54,6 +55,7 @@ private:
     bool        InitViewer();
     bool        SetAnimation();
     bool        SetGeometryLabels();
+    QImage      setAuthorText(QString);
     
     void resizeEvent(QResizeEvent*);
     void showEvent(QShowEvent*);

@@ -20,6 +20,7 @@
 #include <QDialogButtonBox>
 #include <qcombobox.h>
 #include <qkeysequence.h>
+#include <QFontMetrics>
 
 void MainWindow::toggleMenuBar(void)
 {
@@ -522,7 +523,16 @@ void MainWindow::Update()
     // put up name.
     // TODO: write an overridden label object so we can do our own draws.
     //       THIS IS THE ONLY WAY WE COULD OUTLINE TEXT.
-    _ui->artistNameDisplayLabel->setText(_masterQueue[_queuepos].first);
+    //_ui->artistNameDisplayLabel->setText(_masterQueue[_queuepos].first);
+    _ui->artistNameDisplayLabel->setText("");
+    // Create the useable scaling data
+    QPixmap rasterizedName = QPixmap::fromImage(setAuthorText(_masterQueue[_queuepos].first));
+
+    // Put the picture into the application's render
+    rasterizedName.scaled(_ui->artistNameDisplayLabel->width(), _ui->artistNameDisplayLabel->height());
+    _ui->artistNameDisplayLabel->setPixmap(rasterizedName.scaled(_ui->artistNameDisplayLabel->width(), _ui->artistNameDisplayLabel->height(), Qt::KeepAspectRatio));
+    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+    _ui->artistNameDisplayLabel->setMinimumSize(120,72);
 
     // Make the label that contains the previous image visible
     if (!_bJustLaunched)
@@ -670,4 +680,39 @@ void MainWindow::SetWipeDir(int wipedir)
     _wipedir = wipedir;
 
     _settings->setValue("wipe_dir", _wipedir);
+}
+
+QImage MainWindow::setAuthorText(QString input)
+{
+    
+    qDebug() << _ui->artistNameDisplayLabel->geometry().height();
+
+
+    QFont font("Arial");
+    font.setPixelSize(72);
+    font.setBold(true);
+    
+    QFontMetrics fm(font);
+    int pixelsWide = fm.horizontalAdvance(input);
+    int pixelsHigh = fm.height();
+    
+    QImage author(pixelsWide+2,
+                  pixelsHigh+2,
+                 QImage::Format_ARGB32);
+    author.fill(Qt::transparent);
+    
+    QPoint p(1, pixelsHigh-(pixelsHigh/4));
+
+    QPainterPath path;
+    path.addText(p, font, input);
+
+    QPainter painter(&author);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen(Qt::black, 2, Qt::SolidLine);
+    painter.setPen(pen);
+    painter.setBrush(Qt::white);
+    painter.drawPath(path);
+    painter.end();
+
+    return author;
 }
