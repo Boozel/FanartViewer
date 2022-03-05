@@ -29,6 +29,8 @@
 		+ Set the timer that dictates how long to linger on each image. Default is 5000 (5 seconds). Value entry is in milliseconds.
 	- CTRL+F
 		+ Set the direction that images will wipe away to.
+	- CTRL+A
+		+ Change how the artist names are displayed (over the art or under it)
 
 Note that the shortcuts other than showing/hiding the settings ribbon will not work when the ribbon is hidden.
 
