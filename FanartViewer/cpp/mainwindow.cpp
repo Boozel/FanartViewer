@@ -41,7 +41,7 @@ bool MainWindow::SetGeometryLabels(void)
     _ui->defaultLabel->updateGeometry();
     _picDisplayLabel->updateGeometry();
     _picDisplayLabelPrevious->updateGeometry();
-    
+    _ui->artistNameDisplayLabel->updateGeometry();
     SetAnimation();
 
     return true;
@@ -225,6 +225,10 @@ bool MainWindow::RunSetup(bool fullinit)
     _picDisplayLabelPrevious->setMinimumSize(1,1);
     layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
     layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1,  Qt::AlignCenter | Qt::AlignTop);
+    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+    _ui->artistNameDisplayLabel->setMinimumSize(120, 120);
+    _ui->artistNameDisplayLabel->setMaximumSize(9999, 120);
+    _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
     _ui->artistNameDisplayLabel->raise();
     InitViewer();
     return true;
@@ -373,8 +377,6 @@ bool MainWindow::InitViewer()
     // Hide the "previous" image label - there is currently no previous image.
     _picDisplayLabelPrevious->setVisible(false);
     _picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
-
-    _ui->artistNameDisplayLabel->setText("");
 
     // Randomize and queue all images
     setupMasterQueue();
@@ -552,9 +554,6 @@ void MainWindow::Update()
 
     // Put the picture into the application's render
     _ui->artistNameDisplayLabel->setPixmap(rasterizedName);
-    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    _ui->artistNameDisplayLabel->setMinimumSize(120,120);
-    _ui->artistNameDisplayLabel->setMaximumSize(9999,120);
 
     // Make the label that contains the previous image visible
     if (!_bJustLaunched)
