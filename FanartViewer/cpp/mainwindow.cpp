@@ -13,6 +13,7 @@
 
 #include <QFileDialog>
 #include <QColorDialog>
+#include <QFontDialog>
 #include <QMessageBox>
 #include <QFormLayout>
 #include <QLineEdit>
@@ -110,7 +111,7 @@ void MainWindow::SetMenuBar()
 
     // Setup action
     _setWipeDir = new QAction(tr("&Set Wipe"), this);
-    _setWipeDir->setShortcuts(QKeySequence::Find);
+    _setWipeDir->setShortcuts(QKeySequence::Print);
     _setWipeDir->setStatusTip(tr("Change the wipe direction."));
     connect(_setWipeDir, SIGNAL(triggered()), this, SLOT(GetWipeDirDialog()));
     _settingsMenu->addAction(_setWipeDir);
@@ -121,6 +122,13 @@ void MainWindow::SetMenuBar()
     _setAuthorMode->setStatusTip(tr("Change the way artist names are displayed."));
     connect(_setAuthorMode, SIGNAL(triggered()), this, SLOT(GetAuthorModeDlg()));
     _settingsMenu->addAction(_setAuthorMode);
+
+    // Setup action
+    _setFont = new QAction(tr("&Set Font"), this);
+    _setFont->setShortcuts(QKeySequence::Find);
+    _setFont->setStatusTip(tr("Change the way artist names are displayed."));
+    connect(_setFont, SIGNAL(triggered()), this, SLOT(GetFontDlg()));
+    _settingsMenu->addAction(_setFont);
 }
 
 
@@ -201,6 +209,10 @@ bool MainWindow::RunSetup(bool fullinit)
     (_settings->value("author_mode") != QVariant::Invalid ?
         SetAuthorMode(_settings->value("author_mode").value<bool>()) :
         SetAuthorMode(false));
+
+    (_settings->value("font") != QVariant::Invalid ?
+        SetFont(_settings->value("font").value<QFont>()) :
+        SetFont(QFont("Impact", 72, QFont::Bold)));
     
     _tld = _settings->value("pictures_dir").value<QString>();
     
@@ -361,6 +373,8 @@ bool MainWindow::InitViewer()
     // Hide the "previous" image label - there is currently no previous image.
     _picDisplayLabelPrevious->setVisible(false);
     _picDisplayLabelPrevious->setAttribute(Qt::WA_TranslucentBackground);
+
+    _ui->artistNameDisplayLabel->setText("");
 
     // Randomize and queue all images
     setupMasterQueue();
@@ -533,18 +547,14 @@ void MainWindow::Update()
     DetermineLengthToDisplay(_currentMovie);
 
     // put up name.
-    // TODO: write an overridden label object so we can do our own draws.
-    //       THIS IS THE ONLY WAY WE COULD OUTLINE TEXT.
-    //_ui->artistNameDisplayLabel->setText(_masterQueue[_queuepos].first);
-    _ui->artistNameDisplayLabel->setText("");
     // Create the useable scaling data
     QPixmap rasterizedName = QPixmap::fromImage(setAuthorText(_masterQueue[_queuepos].first));
 
     // Put the picture into the application's render
-    rasterizedName.scaled(_ui->artistNameDisplayLabel->width(), _ui->artistNameDisplayLabel->height());
-    _ui->artistNameDisplayLabel->setPixmap(rasterizedName.scaled(_ui->artistNameDisplayLabel->width(), _ui->artistNameDisplayLabel->height(), Qt::KeepAspectRatio));
+    _ui->artistNameDisplayLabel->setPixmap(rasterizedName);
     _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    _ui->artistNameDisplayLabel->setMinimumSize(120,72);
+    _ui->artistNameDisplayLabel->setMinimumSize(120,120);
+    _ui->artistNameDisplayLabel->setMaximumSize(9999,120);
 
     // Make the label that contains the previous image visible
     if (!_bJustLaunched)
@@ -741,42 +751,63 @@ void MainWindow::SetAuthorMode(bool isOverlayEnabled)
         QLayout *layout = _ui->centralwidget->layout();
         
         _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgb(0,0,0,255)");
-        //_ui->artistNameDisplayLabel->setParent(_ui->centralwidget);
+        _ui->artistNameDisplayLabel->setParent(_ui->centralwidget);
         layout->addWidget(_ui->artistNameDisplayLabel);
     }
 }
 
 QImage MainWindow::setAuthorText(QString input)
-{
-    
-    qDebug() << _ui->artistNameDisplayLabel->geometry().height();
-
-
-    QFont font("Arial");
-    font.setPixelSize(72);
-    font.setBold(true);
-    
-    QFontMetrics fm(font);
+{    
+    QFontMetrics fm(_font);
     int pixelsWide = fm.horizontalAdvance(input);
     int pixelsHigh = fm.height();
     
-    QImage author(pixelsWide+2,
-                  pixelsHigh+2,
+    QImage author(pixelsWide+12,
+                  pixelsHigh+20,
                  QImage::Format_ARGB32);
     author.fill(Qt::transparent);
     
-    QPoint p(1, pixelsHigh-(pixelsHigh/4));
+    QPoint p(6, pixelsHigh-(pixelsHigh/6));
 
     QPainterPath path;
-    path.addText(p, font, input);
+    path.addText(p, _font, input);
 
     QPainter painter(&author);
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen(Qt::black, 3, Qt::SolidLine);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    QPen pen(Qt::black, 10, Qt::SolidLine);
     painter.setPen(pen);
     painter.setBrush(Qt::white);
     painter.drawPath(path);
+    painter.fillPath(path, Qt::white);
     painter.end();
 
+    if (author.width() > this->size().width())
+    {
+        author = author.scaledToWidth(this->size().width(), Qt::SmoothTransformation);
+    }
+    if (author.height() > _ui->artistNameDisplayLabel->geometry().height())
+    {
+        author = author.scaledToHeight(_ui->artistNameDisplayLabel->geometry().height(), Qt::SmoothTransformation);
+    }
     return author;
+}
+
+
+
+void MainWindow::GetFontDlg()
+{
+    bool accept;
+    QFontDialog dialog(_font, this);
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
+    if (dialog.exec())
+    {
+        SetFont(dialog.currentFont());
+    }
+}
+
+
+void MainWindow::SetFont(QFont font)
+{
+    _settings->setValue("font", font);
+    _font = font;
 }
