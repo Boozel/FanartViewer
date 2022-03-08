@@ -24,6 +24,7 @@
 #include <QFontMetrics>
 #include <qpainter.h>
 #include <qpainterpath.h>
+#include <QTGlobal>
 
 void MainWindow::toggleMenuBar(void)
 {
@@ -33,6 +34,21 @@ void MainWindow::toggleMenuBar(void)
 void MainWindow::resizeEvent(QResizeEvent*)
 {
     SetGeometryLabels();
+}
+
+void MainWindow::GetAboutDlg(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
+
+    // Add some text above the fields
+    form.addRow(new QLabel("Fanart Viewer"));
+    form.addRow(new QLabel("Using QT Version " + QString::fromUtf8((char*)(qVersion()))));
+
+    dialog.exec();
+
 }
 
 bool MainWindow::SetGeometryLabels(void)
@@ -57,8 +73,25 @@ void MainWindow::showEvent( QShowEvent* )
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , _ui(new Ui::MainWindow)
+
 {
     _ui->setupUi(this);
+
+
+    QGridLayout* layout = _ui->imageDisplayGrid;
+    _picDisplayLabel = new QLabel();
+    _picDisplayLabelPrevious = new QLabel();
+
+    //label gets positioned above textBrowser and is an overlay
+    _picDisplayLabel->setMinimumSize(1, 1);
+    _picDisplayLabelPrevious->setMinimumSize(1, 1);
+    layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
+    layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
+    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+    _ui->artistNameDisplayLabel->setMinimumSize(120, 120);
+    _ui->artistNameDisplayLabel->setMaximumSize(9999, 120);
+    _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
+    _ui->artistNameDisplayLabel->raise();
 
     _settings = new QSettings("Boozel", "Fanart Viewer");
     RunSetup(true);
@@ -129,6 +162,14 @@ void MainWindow::SetMenuBar()
     _setFont->setStatusTip(tr("Change the way artist names are displayed."));
     connect(_setFont, SIGNAL(triggered()), this, SLOT(GetFontDlg()));
     _settingsMenu->addAction(_setFont);
+
+    /****** ABOUT   ******/
+
+    _helpMenu = menuBar()->addMenu(tr("&Help"));
+    _about = new QAction(tr("&About"), this);
+    _about->setStatusTip(tr("Information about this application"));
+    connect(_about, SIGNAL(triggered()), this, SLOT(GetAboutDlg()));
+    _helpMenu->addAction(_about);
 }
 
 
@@ -215,21 +256,6 @@ bool MainWindow::RunSetup(bool fullinit)
         SetFont(QFont("Impact", 72, QFont::Bold)));
     
     _tld = _settings->value("pictures_dir").value<QString>();
-    
-    QGridLayout *layout = _ui->imageDisplayGrid;
-    _picDisplayLabel = new QLabel();
-    _picDisplayLabelPrevious = new QLabel();
-
-    //label gets positioned above textBrowser and is an overlay
-    _picDisplayLabel->setMinimumSize(1,1);
-    _picDisplayLabelPrevious->setMinimumSize(1,1);
-    layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
-    layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1,  Qt::AlignCenter | Qt::AlignTop);
-    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    _ui->artistNameDisplayLabel->setMinimumSize(120, 120);
-    _ui->artistNameDisplayLabel->setMaximumSize(9999, 120);
-    _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
-    _ui->artistNameDisplayLabel->raise();
     InitViewer();
     return true;
 }
