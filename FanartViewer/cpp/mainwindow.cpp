@@ -25,6 +25,7 @@
 #include <qpainter.h>
 #include <qpainterpath.h>
 #include <QTGlobal>
+#include <qpushbutton.h>
 
 void MainWindow::toggleMenuBar(void)
 {
@@ -183,7 +184,11 @@ bool MainWindow::RunForcedSetupDlg()
 
 bool MainWindow::SetMatteBkgColorDlg()
 {
-    SetMatteBkgColor(QColorDialog::getColor());
+    QColorDialog dialog;
+    dialog.setCurrentColor(_fontColor);
+    dialog.setOption(QColorDialog::ShowAlphaChannel);
+    if (dialog.exec() == QColorDialog::Accepted)
+        SetMatteBkgColor(dialog.currentColor());
 
     return true;
 }
@@ -251,9 +256,7 @@ bool MainWindow::RunSetup(bool fullinit)
         SetAuthorMode(_settings->value("author_mode").value<bool>()) :
         SetAuthorMode(false));
 
-    (_settings->value("font") != QVariant::Invalid ?
-        SetFont(_settings->value("font").value<QFont>()) :
-        SetFont(QFont("Impact", 72, QFont::Bold)));
+    GetAttributionValues();
     
     _tld = _settings->value("pictures_dir").value<QString>();
     InitViewer();
@@ -307,7 +310,7 @@ bool MainWindow::SetAnimation()
         // Down
         case 1:
             x = _picDisplayLabelPrevious->geometry().x();
-            y = _ui->centralwidget->geometry().y() + _picDisplayLabelPrevious->geometry().height();
+            y = this->size().height() + _picDisplayLabelPrevious->geometry().height();
             w = _picDisplayLabelPrevious->geometry().width();
             h = _picDisplayLabelPrevious->geometry().height();
             break;
@@ -645,8 +648,19 @@ void MainWindow::GetDimensionsDialog(void)
     // Show the dialog as modal
     if (dialog.exec() == QDialog::Accepted) {
         // If the user didn't dismiss the dialog, do something with the fields
-        fields.first = w_te->text().toInt();
-        fields.second = h_te->text().toInt();
+        if (w_te->text() != "")
+            fields.first = w_te->text().toInt();
+        else
+            fields.first = _appW;
+        if (h_te->text() != "")
+            fields.second = h_te->text().toInt();
+        else
+            fields.second = _appH;
+    }
+    else
+    {
+        fields.first = _appW;
+        fields.second = _appH;
     }
     
     SetAppDimesions(fields.first, fields.second);
@@ -764,18 +778,19 @@ void MainWindow::SetAuthorMode(bool isOverlayEnabled)
     _authorModeOverlayEnabled = isOverlayEnabled;
 
     _settings->setValue("author_mode", _authorModeOverlayEnabled);
+
+    QString alpha = (_authorModeOverlayEnabled ? "0" : "255");
+    QString colorStr = QString::number(_attribBkgColor.red()) + "," + QString::number(_attribBkgColor.green()) + "," + QString::number(_attribBkgColor.blue()) + "," + alpha;
+    _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgba(" + colorStr + ")");
     
     if(_authorModeOverlayEnabled)
     {
-        _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgb(0,0,0,0)");
         QGridLayout *layout = _ui->imageDisplayGrid;
         layout->addWidget(_ui->artistNameDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignBottom);
     }
     else
     {
         QLayout *layout = _ui->centralwidget->layout();
-        
-        _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgb(0,0,0,255)");
         _ui->artistNameDisplayLabel->setParent(_ui->centralwidget);
         layout->addWidget(_ui->artistNameDisplayLabel);
     }
@@ -799,12 +814,16 @@ QImage MainWindow::setAuthorText(QString input)
 
     QPainter painter(&author);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
-    QPen pen(Qt::black, 10, Qt::SolidLine);
+    QPen pen(_fontStrokeColor, 10, Qt::SolidLine);
     painter.setPen(pen);
-    painter.setBrush(Qt::white);
+    painter.setBrush(_fontColor);
     painter.drawPath(path);
-    painter.fillPath(path, Qt::white);
+    painter.fillPath(path, _fontColor);
     painter.end();
+
+    QString alpha = (_authorModeOverlayEnabled ? "0" : "255");
+    QString colorStr = QString::number(_attribBkgColor.red()) + "," + QString::number(_attribBkgColor.green()) + "," + QString::number(_attribBkgColor.blue()) + "," + alpha;
+    _ui->artistNameDisplayLabel->setStyleSheet("background-color:rgba(" + colorStr + ")");
 
     if (author.width() > this->size().width())
     {
@@ -821,18 +840,97 @@ QImage MainWindow::setAuthorText(QString input)
 
 void MainWindow::GetFontDlg()
 {
-    bool accept;
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+
+    //Create dialogue spawn buttons
+    QPushButton* setFontBtn = new QPushButton("&Font", this);
+    QPushButton* setFontClrBtn = new QPushButton("&Text Color", this);
+    QPushButton* setFontStrokeBtn = new QPushButton("&Outline Color", this);
+    QPushButton* setAttribBkgBtn = new QPushButton("&Credit Bkg Color", this);
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
+
+    // Add some text above the fields
+    form.addRow(setFontBtn);
+    form.addRow(setFontClrBtn);
+    form.addRow(setFontStrokeBtn);
+    form.addRow(setAttribBkgBtn);
+
+    connect(setFontBtn, SIGNAL(clicked()), this, SLOT(GetFontFontDlg()));
+    connect(setFontClrBtn, SIGNAL(clicked()), this, SLOT(GetFontColorDlg()));
+    connect(setFontStrokeBtn, SIGNAL(clicked()), this, SLOT(GetFontStrokeColorDlg()));
+    connect(setAttribBkgBtn, SIGNAL(clicked()), this, SLOT(GetAttribBkgColorDlg()));
+
+    dialog.exec();
+}
+
+
+void MainWindow::GetFontFontDlg(void)
+{
     QFontDialog dialog(_font, this);
     dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
     if (dialog.exec())
     {
-        SetFont(dialog.currentFont());
+        _font = dialog.currentFont();
     }
 }
 
-
-void MainWindow::SetFont(QFont font)
+void MainWindow::GetFontColorDlg(void)
 {
-    _settings->setValue("font", font);
-    _font = font;
+    QColorDialog dialog;
+    dialog.setCurrentColor(_fontColor);
+    dialog.setOption(QColorDialog::ShowAlphaChannel);
+    if(dialog.exec() == QColorDialog::Accepted)
+        _fontColor = dialog.currentColor();
+    SetAttributionValues();
+}
+
+void MainWindow::GetFontStrokeColorDlg(void)
+{
+    QColorDialog dialog;
+    dialog.setCurrentColor(_fontStrokeColor);
+    dialog.setOption(QColorDialog::ShowAlphaChannel);
+    if (dialog.exec() == QColorDialog::Accepted)
+        _fontStrokeColor = dialog.currentColor();
+    SetAttributionValues();
+}
+
+void MainWindow::GetAttribBkgColorDlg(void)
+{
+    QColorDialog dialog;
+    dialog.setCurrentColor(_attribBkgColor);
+    dialog.setOption(QColorDialog::ShowAlphaChannel);
+    if (dialog.exec() == QColorDialog::Accepted)
+        _attribBkgColor = dialog.currentColor();
+    SetAttributionValues();
+}
+
+
+void MainWindow::SetAttributionValues(void)
+{
+    _settings->setValue("font", _font);
+    _settings->setValue("font_color", _fontColor);
+    _settings->setValue("font_stroke", _fontStrokeColor);
+    _settings->setValue("attrib_color", _attribBkgColor);
+}
+
+void MainWindow::GetAttributionValues(void)
+{
+
+    (_settings->value("font") != QVariant::Invalid ?
+        _font = _settings->value("font").value<QFont>() :
+        _font = QFont("Impact", 72, QFont::Bold));
+
+    (_settings->value("font_color") != QVariant::Invalid ?
+        _fontColor = _settings->value("font_color").value<QColor>() :
+        _fontColor = QColor(255, 255, 255));
+
+    (_settings->value("font_stroke") != QVariant::Invalid ?
+        _fontStrokeColor = _settings->value("font_stroke").value<QColor>() :
+        _fontStrokeColor = QColor(0, 0, 0));
+
+    (_settings->value("attrib_color") != QVariant::Invalid ?
+        _attribBkgColor = _settings->value("attrib_color").value<QColor>() :
+        _attribBkgColor = QColor(0, 0, 0, 0));
 }
