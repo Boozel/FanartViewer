@@ -76,6 +76,7 @@ private:
     int                                     _queuepos;
     QList<QPair<QString, QString>>          _masterQueue;
     QElapsedTimer                           _elapsedTimer;
+    QTimer                                  *_updateTimer;
     QPropertyAnimation                      *_slideOut;
     QMutex                                  _gifMutex;
     

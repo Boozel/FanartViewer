@@ -57,8 +57,25 @@ void MainWindow::showEvent( QShowEvent* )
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , _ui(new Ui::MainWindow)
+
 {
     _ui->setupUi(this);
+
+
+    QGridLayout* layout = _ui->imageDisplayGrid;
+    _picDisplayLabel = new QLabel();
+    _picDisplayLabelPrevious = new QLabel();
+
+    //label gets positioned above textBrowser and is an overlay
+    _picDisplayLabel->setMinimumSize(1, 1);
+    _picDisplayLabelPrevious->setMinimumSize(1, 1);
+    layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
+    layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
+    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+    _ui->artistNameDisplayLabel->setMinimumSize(120, 120);
+    _ui->artistNameDisplayLabel->setMaximumSize(9999, 120);
+    _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
+    _ui->artistNameDisplayLabel->raise();
 
     _settings = new QSettings("Boozel", "Fanart Viewer");
     RunSetup(true);
@@ -215,21 +232,6 @@ bool MainWindow::RunSetup(bool fullinit)
         SetFont(QFont("Impact", 72, QFont::Bold)));
     
     _tld = _settings->value("pictures_dir").value<QString>();
-    
-    QGridLayout *layout = _ui->imageDisplayGrid;
-    _picDisplayLabel = new QLabel();
-    _picDisplayLabelPrevious = new QLabel();
-
-    //label gets positioned above textBrowser and is an overlay
-    _picDisplayLabel->setMinimumSize(1,1);
-    _picDisplayLabelPrevious->setMinimumSize(1,1);
-    layout->addWidget(_picDisplayLabel, 0, 0, -1, -1, Qt::AlignCenter | Qt::AlignTop);
-    layout->addWidget(_picDisplayLabelPrevious, 0, 0, -1, -1,  Qt::AlignCenter | Qt::AlignTop);
-    _ui->artistNameDisplayLabel->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
-    _ui->artistNameDisplayLabel->setMinimumSize(120, 120);
-    _ui->artistNameDisplayLabel->setMaximumSize(9999, 120);
-    _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
-    _ui->artistNameDisplayLabel->raise();
     InitViewer();
     return true;
 }
