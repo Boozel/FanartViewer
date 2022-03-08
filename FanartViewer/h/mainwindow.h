@@ -40,6 +40,10 @@ public slots:
     void GetWipeDirDialog(void);
     void GetAuthorModeDlg(void);
     void GetFontDlg(void);
+    void GetFontFontDlg(void);
+    void GetFontColorDlg(void);
+    void GetFontStrokeColorDlg(void);
+    void GetAttribBkgColorDlg(void);
     void GetAboutDlg(void);
     void SetMenuBar(void);
     void Update(void);
@@ -55,7 +59,8 @@ private:
     void        SetTimeToDisplay(int);
     void        SetWipeDir(int);
     void        SetAuthorMode(bool);
-    void        SetFont(QFont);
+    void        GetAttributionValues(void);
+    void        SetAttributionValues(void);
     
     bool        InitViewer();
     bool        SetAnimation();
@@ -93,6 +98,9 @@ private:
     int                                     _appH;
     int                                     _authorModeOverlayEnabled;
     QFont                                   _font;
+    QColor                                  _fontColor;
+    QColor                                  _fontStrokeColor;
+    QColor                                  _attribBkgColor;
     QColor                                  _matteBkg;
     int                                     _timeToDisplay;
     QShortcut                               *_menuBarSC;
