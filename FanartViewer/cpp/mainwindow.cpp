@@ -24,6 +24,7 @@
 #include <QFontMetrics>
 #include <qpainter.h>
 #include <qpainterpath.h>
+#include <QTGlobal>
 
 void MainWindow::toggleMenuBar(void)
 {
@@ -33,6 +34,21 @@ void MainWindow::toggleMenuBar(void)
 void MainWindow::resizeEvent(QResizeEvent*)
 {
     SetGeometryLabels();
+}
+
+void MainWindow::GetAboutDlg(void)
+{
+    QDialog dialog(this);
+    // Use a layout allowing to have a label next to each field
+    QFormLayout form(&dialog);
+    dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
+
+    // Add some text above the fields
+    form.addRow(new QLabel("Fanart Viewer"));
+    form.addRow(new QLabel("Using QT Version " + QString::fromUtf8((char*)(qVersion()))));
+
+    dialog.exec();
+
 }
 
 bool MainWindow::SetGeometryLabels(void)
@@ -146,6 +162,14 @@ void MainWindow::SetMenuBar()
     _setFont->setStatusTip(tr("Change the way artist names are displayed."));
     connect(_setFont, SIGNAL(triggered()), this, SLOT(GetFontDlg()));
     _settingsMenu->addAction(_setFont);
+
+    /****** ABOUT   ******/
+
+    _helpMenu = menuBar()->addMenu(tr("&Help"));
+    _about = new QAction(tr("&About"), this);
+    _about->setStatusTip(tr("Information about this application"));
+    connect(_about, SIGNAL(triggered()), this, SLOT(GetAboutDlg()));
+    _helpMenu->addAction(_about);
 }
 
 

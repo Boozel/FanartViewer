@@ -40,6 +40,7 @@ public slots:
     void GetWipeDirDialog(void);
     void GetAuthorModeDlg(void);
     void GetFontDlg(void);
+    void GetAboutDlg(void);
     void SetMenuBar(void);
     void Update(void);
     void ResetOldImageLabel(void);
@@ -106,5 +107,9 @@ private:
     QAction                                 *_setWipeDir;
     QAction                                 *_setAuthorMode;
     QAction                                 *_setFont;
+
+    // About nav
+    QMenu                                   * _helpMenu;
+    QAction                                 *_about;
 };
 #endif // MAINWINDOW_H
