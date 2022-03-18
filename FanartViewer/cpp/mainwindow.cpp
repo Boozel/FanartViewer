@@ -24,7 +24,6 @@
 #include <QFontMetrics>
 #include <qpainter.h>
 #include <qpainterpath.h>
-#include <QTGlobal>
 #include <qpushbutton.h>
 
 void MainWindow::toggleMenuBar(void)
@@ -94,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
     _ui->artistNameDisplayLabel->setText("");                   //Remove dev text
     _ui->artistNameDisplayLabel->raise();
 
-    _settings = new QSettings("Boozel", "Fanart Viewer");
+    _settings = new QSettings(QSettings::UserScope, "Boozel", "Fanart Viewer");
     RunSetup(true);
 }
 
@@ -871,9 +870,8 @@ void MainWindow::GetFontFontDlg(void)
     QFontDialog dialog(_font, this);
     dialog.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255)");
     if (dialog.exec())
-    {
         _font = dialog.currentFont();
-    }
+    SetAttributionValues();
 }
 
 void MainWindow::GetFontColorDlg(void)
